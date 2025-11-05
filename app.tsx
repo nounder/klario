@@ -14,48 +14,50 @@ export default function App() {
     spacePressed: false,
     isPanning: false,
     panStart: null,
+    pressureSensitive: true,
+    maxPressureWidth: 20,
+    tiltSensitive: true,
   })
 
   let svgRef: SVGSVGElement | undefined
 
   // Get screen/client coordinates for panning
-  const getScreenCoordinates = (e: MouseEvent | TouchEvent): Point => {
-    if (e instanceof MouseEvent) {
-      return { x: e.clientX, y: e.clientY }
-    } else {
-      const touch = (e as TouchEvent).touches[0]
-      if (!touch) return { x: 0, y: 0 }
-      return { x: touch.clientX, y: touch.clientY }
-    }
+  const getScreenCoordinates = (e: PointerEvent): Point => {
+    return { x: e.clientX, y: e.clientY }
   }
 
   // Get SVG coordinates for drawing (accounts for viewBox)
-  const getCoordinates = (e: MouseEvent | TouchEvent): Point => {
+  const getCoordinates = (e: PointerEvent): Point => {
     if (!svgRef) return { x: 0, y: 0 }
     const rect = svgRef.getBoundingClientRect()
 
-    let clientX: number, clientY: number
-    if (e instanceof MouseEvent) {
-      clientX = e.clientX
-      clientY = e.clientY
-    } else {
-      const touch = (e as TouchEvent).touches[0]
-      if (!touch) return { x: 0, y: 0 }
-      clientX = touch.clientX
-      clientY = touch.clientY
-    }
+    const clientX = e.clientX
+    const clientY = e.clientY
 
     // Convert screen coordinates to SVG viewBox coordinates
     const relativeX = (clientX - rect.left) / rect.width
     const relativeY = (clientY - rect.top) / rect.height
 
-    return {
+    const point: Point = {
       x: store.viewBox.x + relativeX * store.viewBox.width,
       y: store.viewBox.y + relativeY * store.viewBox.height,
     }
+
+    // Add Apple Pencil/pen-specific properties if available
+    if (e.pointerType === 'pen') {
+      point.pressure = e.pressure || 0.5
+      point.tiltX = e.tiltX || 0
+      point.tiltY = e.tiltY || 0
+      point.twist = e.twist || 0
+      point.altitudeAngle = (e as any).altitudeAngle || 0
+      point.azimuthAngle = (e as any).azimuthAngle || 0
+      point.pointerType = e.pointerType
+    }
+
+    return point
   }
 
-  const startDrawing = (e: MouseEvent | TouchEvent) => {
+  const startDrawing = (e: PointerEvent) => {
     if (store.spacePressed) {
       startPanning(e)
       return
@@ -68,7 +70,7 @@ export default function App() {
     })
   }
 
-  const draw = (e: MouseEvent | TouchEvent) => {
+  const draw = (e: PointerEvent) => {
     if (store.isPanning) {
       pan(e)
       return
@@ -85,10 +87,13 @@ export default function App() {
       return
     }
     if (store.isDrawing && store.currentPath.length > 0) {
+      const isPenPath = store.currentPath.some(point => point.pointerType === 'pen')
       const newPath = {
         points: [...store.currentPath],
         color: store.color,
         width: store.brushWidth,
+        isPenPath,
+        pressureSensitive: isPenPath && store.pressureSensitive,
       }
       setStore("paths", (paths) => [...paths, newPath])
       setStore("currentPath", [])
@@ -153,7 +158,7 @@ export default function App() {
   }
 
   // Start panning
-  const startPanning = (e: MouseEvent | TouchEvent) => {
+  const startPanning = (e: PointerEvent) => {
     if (!store.spacePressed || !canPan()) return
     e.preventDefault()
     const point = getScreenCoordinates(e)
@@ -164,7 +169,7 @@ export default function App() {
   }
 
   // Pan the view
-  const pan = (e: MouseEvent | TouchEvent) => {
+  const pan = (e: PointerEvent) => {
     if (!store.isPanning || !store.panStart || !svgRef) return
     e.preventDefault()
 
@@ -288,6 +293,51 @@ export default function App() {
     return path
   }
 
+  // Calculate stroke width based on pressure and tilt
+  const getStrokeWidth = (point: Point, baseBrushWidth: number): number => {
+    let width = baseBrushWidth
+    
+    if (point.pressure !== undefined && store.pressureSensitive) {
+      // Map pressure (0-1) to brush width range (baseBrushWidth/4 to maxPressureWidth)
+      const minWidth = Math.max(0.5, baseBrushWidth * 0.25)
+      const maxWidth = store.maxPressureWidth
+      width = minWidth + (point.pressure * (maxWidth - minWidth))
+    }
+    
+    // Apply tilt effect - when pencil is more tilted, stroke gets wider
+    if (point.tiltX !== undefined && point.tiltY !== undefined && store.tiltSensitive) {
+      const tilt = Math.sqrt(point.tiltX * point.tiltX + point.tiltY * point.tiltY)
+      const maxTilt = 90 // degrees
+      const tiltFactor = 1 + (tilt / maxTilt) * 0.5 // up to 50% wider when fully tilted
+      width *= tiltFactor
+    }
+    
+    return width
+  }
+
+  // Calculate opacity based on pressure for subtle effect
+  const getStrokeOpacity = (point: Point): number => {
+    if (point.pressure !== undefined && store.pressureSensitive) {
+      // Map pressure to opacity (0.3 to 1.0)
+      return 0.3 + (point.pressure * 0.7)
+    }
+    return 1.0
+  }
+
+  // Calculate stroke dash pattern based on twist for textural effects
+  const getStrokeDasharray = (point: Point): string | undefined => {
+    if (point.twist !== undefined && point.pointerType === 'pen') {
+      const normalizedTwist = Math.abs(point.twist) / 180 // 0-1
+      if (normalizedTwist > 0.1) {
+        // Create a dash pattern that varies with twist
+        const dashLength = 2 + (normalizedTwist * 8)
+        const gapLength = 1 + (normalizedTwist * 3)
+        return `${dashLength} ${gapLength}`
+      }
+    }
+    return undefined
+  }
+
   const colors = [
     "#000000",
     "#FF0000",
@@ -400,6 +450,64 @@ export default function App() {
           </span>
         </div>
 
+        {/* Apple Pencil Settings */}
+        <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
+          <label style={{ 
+            "font-weight": "600", 
+            color: "rgba(0, 0, 0, 0.8)",
+            "font-size": "14px",
+            "letter-spacing": "0.5px"
+          }}>
+            <input
+              type="checkbox"
+              checked={store.pressureSensitive}
+              onChange={(e) => setStore("pressureSensitive", e.currentTarget.checked)}
+              style={{ "margin-right": "6px" }}
+            />
+            Pressure
+          </label>
+        </div>
+
+        <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
+          <label style={{ 
+            "font-weight": "600", 
+            color: "rgba(0, 0, 0, 0.8)",
+            "font-size": "14px",
+            "letter-spacing": "0.5px"
+          }}>
+            Max Pressure:
+          </label>
+          <input
+            type="range"
+            min="5"
+            max="50"
+            value={store.maxPressureWidth}
+            onInput={(e) =>
+              setStore("maxPressureWidth", parseInt(e.currentTarget.value))}
+            style={{ 
+              width: "100px",
+              height: "6px",
+              background: "rgba(255, 255, 255, 0.3)",
+              "border-radius": "3px",
+              outline: "none",
+              appearance: "none",
+              "-webkit-appearance": "none",
+            }}
+          />
+          <span style={{ 
+            "min-width": "35px",
+            "font-weight": "600",
+            color: "rgba(0, 0, 0, 0.7)",
+            "font-size": "13px",
+            background: "rgba(255, 255, 255, 0.5)",
+            padding: "4px 8px",
+            "border-radius": "8px",
+            border: "1px solid rgba(255, 255, 255, 0.3)"
+          }}>
+            {store.maxPressureWidth}px
+          </span>
+        </div>
+
         <button
           onClick={clearCanvas}
           style={{
@@ -439,15 +547,16 @@ export default function App() {
         brushWidth={store.brushWidth}
         spacePressed={store.spacePressed}
         isPanning={store.isPanning}
+        pressureSensitive={store.pressureSensitive}
         onRef={initializeViewBox}
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
-        onMouseUp={stopDrawing}
-        onMouseLeave={stopDrawing}
-        onTouchStart={startDrawing}
-        onTouchMove={draw}
-        onTouchEnd={stopDrawing}
+        onPointerDown={startDrawing}
+        onPointerMove={draw}
+        onPointerUp={stopDrawing}
+        onPointerLeave={stopDrawing}
         pointsToPath={pointsToPath}
+        getStrokeWidth={getStrokeWidth}
+        getStrokeOpacity={getStrokeOpacity}
+        getStrokeDasharray={getStrokeDasharray}
       />
     </div>
   )

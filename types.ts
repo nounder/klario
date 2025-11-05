@@ -1,12 +1,21 @@
 export interface Point {
   x: number
   y: number
+  pressure?: number
+  tiltX?: number
+  tiltY?: number
+  twist?: number
+  altitudeAngle?: number
+  azimuthAngle?: number
+  pointerType?: string
 }
 
 export interface Path {
   points: Point[]
   color: string
   width: number
+  isPenPath?: boolean
+  pressureSensitive?: boolean
 }
 
 export interface Bounds {
@@ -33,4 +42,7 @@ export interface AppState {
   spacePressed: boolean
   isPanning: boolean
   panStart: Point | null
+  pressureSensitive: boolean
+  maxPressureWidth: number
+  tiltSensitive: boolean
 }
