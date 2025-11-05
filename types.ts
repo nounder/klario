@@ -36,6 +36,7 @@ export interface AppState {
   paths: Path[]
   currentPath: Point[]
   isDrawing: boolean
+  activePointerId: number | null
   color: string
   brushWidth: number
   viewBox: ViewBox

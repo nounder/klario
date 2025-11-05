@@ -15,6 +15,17 @@ svg path {
   stroke-linejoin: round;
 }
 
+/* Optimize line rendering during active drawing */
+svg line {
+  vector-effect: non-scaling-stroke;
+}
+
+/* Optimize current drawing group */
+svg g {
+  /* Enable GPU acceleration for drawing group */
+  will-change: transform;
+}
+
 /* Cursor styles for different interaction states */
 svg.space-pressed {
   cursor: grab;
