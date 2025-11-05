@@ -1,8 +1,12 @@
 svg {
   user-select: none;
   touch-action: none;
+  /* Safari still needs prefix 2025-11-05 */
+  -webkit-user-select: none;
+  -webkit-touch-action: none;
   outline: none;
   contain: layout style paint;
+  background: white;
 }
 
 svg path {
