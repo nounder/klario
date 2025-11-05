@@ -102,58 +102,38 @@ export default function Canvas(props: {
           }}
         </For>
 
-        {/* Render current path being drawn */}
-        {props.currentPath.length > 0 && (() => {
-          const isPenPath = props.currentPath.some(point => point.pointerType === 'pen')
-          
-          if (isPenPath && props.pressureSensitive && props.currentPath.length > 0) {
-            // Try to render pressure-sensitive current path as single filled path
-            const variableWidthPath = props.pointsToVariableWidthPath(props.currentPath, props.brushWidth)
-            const avgOpacity = props.currentPath.length > 0 
-              ? props.currentPath.reduce((sum, point) => sum + props.getStrokeOpacity(point), 0) / props.currentPath.length
-              : 1.0
-            
-            // Fallback to regular stroked path if variable width path generation fails
-            if (variableWidthPath && variableWidthPath.length > 0) {
-              return (
-                <path
-                  d={variableWidthPath}
-                  fill={props.color}
-                  fill-opacity={avgOpacity}
-                />
-              )
-            } else {
-              // Fallback: render as regular stroked path with average pressure width
-              const avgPressureWidth = props.currentPath.length > 0
-                ? props.currentPath.reduce((sum, point) => sum + props.getStrokeWidth(point, props.brushWidth), 0) / props.currentPath.length
+        {/* Render current path being drawn as line segments for better performance */}
+        <g>
+          <For each={props.currentPath.slice(1)}>
+            {(point, index) => {
+              const prevPoint = props.currentPath[index()]!
+              const isPenPath = point.pointerType === 'pen'
+              
+              // Calculate stroke width for this segment
+              const strokeWidth = isPenPath && props.pressureSensitive
+                ? (props.getStrokeWidth(prevPoint, props.brushWidth) + props.getStrokeWidth(point, props.brushWidth)) / 2
                 : props.brushWidth
               
+              // Calculate opacity for this segment
+              const strokeOpacity = isPenPath && props.pressureSensitive
+                ? (props.getStrokeOpacity(prevPoint) + props.getStrokeOpacity(point)) / 2
+                : props.getStrokeOpacity(point)
+              
               return (
-                <path
-                  d={props.pointsToPath(props.currentPath)}
+                <line
+                  x1={prevPoint.x}
+                  y1={prevPoint.y}
+                  x2={point.x}
+                  y2={point.y}
                   stroke={props.color}
-                  stroke-width={avgPressureWidth}
-                  stroke-opacity={avgOpacity}
+                  stroke-width={strokeWidth}
+                  stroke-opacity={strokeOpacity}
                   stroke-linecap="round"
-                  stroke-linejoin="round"
-                  fill="none"
                 />
               )
-            }
-          } else {
-            // Render normal current path
-            return (
-              <path
-                d={props.pointsToPath(props.currentPath)}
-                stroke={props.color}
-                stroke-width={props.brushWidth}
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                fill="none"
-              />
-            )
-          }
-        })()}
+            }}
+          </For>
+        </g>
       </svg>
     </div>
   )
