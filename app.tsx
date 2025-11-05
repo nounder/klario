@@ -1,60 +1,67 @@
-import { For } from "solid-js"
+import { createMemo, For } from "solid-js"
 import { createStore } from "solid-js/store"
-import { render } from "solid-js/web"
+import Canvas from "./Canvas"
+import type { AppState, Bounds, Point } from "./types"
 
-interface Point {
-  x: number
-  y: number
-}
-
-interface Path {
-  points: Point[]
-  color: string
-  width: number
-}
-
-interface AppState {
-  paths: Path[]
-  currentPath: Point[]
-  isDrawing: boolean
-  color: string
-  brushWidth: number
-}
-
-function DrawingApp() {
+export default function App() {
   const [store, setStore] = createStore<AppState>({
     paths: [],
     currentPath: [],
     isDrawing: false,
     color: "#000000",
     brushWidth: 3,
+    viewBox: { x: 0, y: 0, width: 100, height: 100 },
+    spacePressed: false,
+    isPanning: false,
+    panStart: null,
   })
 
   let svgRef: SVGSVGElement | undefined
 
+  // Get screen/client coordinates for panning
+  const getScreenCoordinates = (e: MouseEvent | TouchEvent): Point => {
+    if (e instanceof MouseEvent) {
+      return { x: e.clientX, y: e.clientY }
+    } else {
+      const touch = (e as TouchEvent).touches[0]
+      if (!touch) return { x: 0, y: 0 }
+      return { x: touch.clientX, y: touch.clientY }
+    }
+  }
+
+  // Get SVG coordinates for drawing (accounts for viewBox)
   const getCoordinates = (e: MouseEvent | TouchEvent): Point => {
     if (!svgRef) return { x: 0, y: 0 }
     const rect = svgRef.getBoundingClientRect()
 
+    let clientX: number, clientY: number
     if (e instanceof MouseEvent) {
-      return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      }
+      clientX = e.clientX
+      clientY = e.clientY
     } else {
       const touch = (e as TouchEvent).touches[0]
       if (!touch) return { x: 0, y: 0 }
-      return {
-        x: touch.clientX - rect.left,
-        y: touch.clientY - rect.top,
-      }
+      clientX = touch.clientX
+      clientY = touch.clientY
+    }
+
+    // Convert screen coordinates to SVG viewBox coordinates
+    const relativeX = (clientX - rect.left) / rect.width
+    const relativeY = (clientY - rect.top) / rect.height
+
+    return {
+      x: store.viewBox.x + relativeX * store.viewBox.width,
+      y: store.viewBox.y + relativeY * store.viewBox.height,
     }
   }
 
   const startDrawing = (e: MouseEvent | TouchEvent) => {
+    if (store.spacePressed) {
+      startPanning(e)
+      return
+    }
     e.preventDefault()
     const point = getCoordinates(e)
-    console.log("startDrawing", point)
     setStore({
       isDrawing: true,
       currentPath: [point],
@@ -62,6 +69,10 @@ function DrawingApp() {
   }
 
   const draw = (e: MouseEvent | TouchEvent) => {
+    if (store.isPanning) {
+      pan(e)
+      return
+    }
     if (!store.isDrawing) return
     e.preventDefault()
     const point = getCoordinates(e)
@@ -69,11 +80,10 @@ function DrawingApp() {
   }
 
   const stopDrawing = () => {
-    console.log("stopDrawing called", {
-      isDrawing: store.isDrawing,
-      currentPathLength: store.currentPath.length,
-      pathsCount: store.paths.length,
-    })
+    if (store.isPanning) {
+      stopPanning()
+      return
+    }
     if (store.isDrawing && store.currentPath.length > 0) {
       const newPath = {
         points: [...store.currentPath],
@@ -81,7 +91,6 @@ function DrawingApp() {
         width: store.brushWidth,
       }
       setStore("paths", (paths) => [...paths, newPath])
-      console.log("Path added, new paths count:", store.paths.length + 1)
       setStore("currentPath", [])
       setStore("isDrawing", false)
     } else {
@@ -94,6 +103,174 @@ function DrawingApp() {
       paths: [],
       currentPath: [],
     })
+  }
+
+  // Calculate the bounding box of all paths (computed signal)
+  const canvasBounds = createMemo((): Bounds | null => {
+    const allPoints: Point[] = []
+
+    store.paths.forEach((path) => {
+      allPoints.push(...path.points)
+    })
+
+    if (store.currentPath.length > 0) {
+      allPoints.push(...store.currentPath)
+    }
+
+    if (allPoints.length === 0) return null
+
+    const padding = 50
+    return {
+      minX: Math.min(...allPoints.map((p) => p.x)) - padding,
+      minY: Math.min(...allPoints.map((p) => p.y)) - padding,
+      maxX: Math.max(...allPoints.map((p) => p.x)) + padding,
+      maxY: Math.max(...allPoints.map((p) => p.y)) + padding,
+    }
+  })
+
+  // Check if panning should be enabled (content is larger than viewport)
+  const canPan = createMemo((): boolean => {
+    const bounds = canvasBounds()
+    if (!bounds) return false
+
+    const contentWidth = bounds.maxX - bounds.minX
+    const contentHeight = bounds.maxY - bounds.minY
+
+    return (
+      contentWidth > store.viewBox.width || contentHeight > store.viewBox.height
+    )
+  })
+
+  // Update viewBox based on current SVG size
+  const updateViewBox = () => {
+    if (!svgRef) return
+    const rect = svgRef.getBoundingClientRect()
+    setStore("viewBox", (vb) => ({
+      ...vb,
+      width: rect.width,
+      height: rect.height,
+    }))
+  }
+
+  // Start panning
+  const startPanning = (e: MouseEvent | TouchEvent) => {
+    if (!store.spacePressed || !canPan()) return
+    e.preventDefault()
+    const point = getScreenCoordinates(e)
+    setStore({
+      isPanning: true,
+      panStart: point,
+    })
+  }
+
+  // Pan the view
+  const pan = (e: MouseEvent | TouchEvent) => {
+    if (!store.isPanning || !store.panStart || !svgRef) return
+    e.preventDefault()
+
+    const point = getScreenCoordinates(e)
+    const rect = svgRef.getBoundingClientRect()
+
+    // Convert screen pixel delta to viewBox coordinate delta
+    const screenDx = point.x - store.panStart.x
+    const screenDy = point.y - store.panStart.y
+    const viewBoxDx = (screenDx / rect.width) * store.viewBox.width
+    const viewBoxDy = (screenDy / rect.height) * store.viewBox.height
+
+    setStore("viewBox", (vb) => {
+      const bounds = canvasBounds()
+
+      // Apply pan (negative because we're moving the viewBox, not the content)
+      let newX = vb.x - viewBoxDx
+      let newY = vb.y - viewBoxDy
+
+      // Clamp viewBox to canvas bounds only if content is larger than viewport
+      if (bounds && canPan()) {
+        const contentWidth = bounds.maxX - bounds.minX
+        const contentHeight = bounds.maxY - bounds.minY
+
+        // Only clamp in directions where content exceeds viewport
+        if (contentWidth > vb.width) {
+          newX = Math.max(
+            bounds.minX,
+            Math.min(bounds.maxX - vb.width, newX),
+          )
+        } else {
+          // Content fits horizontally, don't pan in this direction
+          newX = vb.x
+        }
+
+        if (contentHeight > vb.height) {
+          newY = Math.max(
+            bounds.minY,
+            Math.min(bounds.maxY - vb.height, newY),
+          )
+        } else {
+          // Content fits vertically, don't pan in this direction
+          newY = vb.y
+        }
+      }
+
+      return {
+        ...vb,
+        x: newX,
+        y: newY,
+      }
+    })
+
+    setStore("panStart", point)
+  }
+
+  // Stop panning
+  const stopPanning = () => {
+    setStore({
+      isPanning: false,
+      panStart: null,
+    })
+  }
+
+  // Handle keyboard events
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.code === "Space" && !store.spacePressed) {
+      e.preventDefault()
+      setStore("spacePressed", true)
+    }
+  }
+
+  const handleKeyUp = (e: KeyboardEvent) => {
+    if (e.code === "Space") {
+      e.preventDefault()
+      setStore("spacePressed", false)
+      stopPanning()
+    }
+  }
+
+  // Set up event listeners
+  const setupEventListeners = () => {
+    window.addEventListener("keydown", handleKeyDown)
+    window.addEventListener("keyup", handleKeyUp)
+    window.addEventListener("resize", updateViewBox)
+  }
+
+  // Initialize on mount
+  const initializeViewBox = (el: SVGSVGElement | undefined) => {
+    if (!el) return
+    svgRef = el
+    setupEventListeners()
+
+    // Initial viewBox setup - set to actual SVG size
+    setTimeout(() => {
+      if (!svgRef) return
+      const rect = svgRef.getBoundingClientRect()
+      if (rect.width > 0 && rect.height > 0) {
+        setStore("viewBox", {
+          x: 0,
+          y: 0,
+          width: rect.width,
+          height: rect.height,
+        })
+      }
+    }, 0)
   }
 
   const pointsToPath = (points: Point[]): string => {
@@ -134,17 +311,28 @@ function DrawingApp() {
       {/* Toolbar */}
       <div
         style={{
-          background: "white",
-          padding: "16px",
-          "box-shadow": "0 2px 4px rgba(0,0,0,0.1)",
+          background: "rgba(255, 255, 255, 0.8)",
+          "backdrop-filter": "blur(20px) saturate(180%)",
+          "-webkit-backdrop-filter": "blur(20px) saturate(180%)",
+          padding: "20px 24px",
+          border: "1px solid rgba(255, 255, 255, 0.18)",
+          "border-radius": "0 0 20px 20px",
+          "box-shadow": "0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 16px rgba(0, 0, 0, 0.05)",
           display: "flex",
-          gap: "16px",
+          gap: "20px",
           "align-items": "center",
           "flex-wrap": "wrap",
+          position: "relative",
+          "z-index": 10,
         }}
       >
-        <div style={{ display: "flex", gap: "8px", "align-items": "center" }}>
-          <label style={{ "font-weight": "500" }}>
+        <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
+          <label style={{ 
+            "font-weight": "600", 
+            color: "rgba(0, 0, 0, 0.8)",
+            "font-size": "14px",
+            "letter-spacing": "0.5px"
+          }}>
             Color:
           </label>
           <For each={colors}>
@@ -152,14 +340,19 @@ function DrawingApp() {
               <button
                 onClick={() => setStore("color", c)}
                 style={{
-                  width: "32px",
-                  height: "32px",
+                  width: "36px",
+                  height: "36px",
                   border: store.color === c
-                    ? "3px solid #333"
-                    : "2px solid #ccc",
+                    ? "3px solid rgba(0, 0, 0, 0.6)"
+                    : "2px solid rgba(255, 255, 255, 0.3)",
                   background: c,
                   cursor: "pointer",
-                  "border-radius": "4px",
+                  "border-radius": "12px",
+                  "box-shadow": store.color === c 
+                    ? "0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.5)"
+                    : "0 2px 8px rgba(0, 0, 0, 0.1)",
+                  transition: "all 0.2s ease",
+                  transform: store.color === c ? "scale(1.1)" : "scale(1)",
                 }}
                 title={c}
               />
@@ -167,8 +360,13 @@ function DrawingApp() {
           </For>
         </div>
 
-        <div style={{ display: "flex", gap: "8px", "align-items": "center" }}>
-          <label style={{ "font-weight": "500" }}>
+        <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
+          <label style={{ 
+            "font-weight": "600", 
+            color: "rgba(0, 0, 0, 0.8)",
+            "font-size": "14px",
+            "letter-spacing": "0.5px"
+          }}>
             Brush Size:
           </label>
           <input
@@ -178,9 +376,26 @@ function DrawingApp() {
             value={store.brushWidth}
             onInput={(e) =>
               setStore("brushWidth", parseInt(e.currentTarget.value))}
-            style={{ width: "120px" }}
+            style={{ 
+              width: "140px",
+              height: "6px",
+              background: "rgba(255, 255, 255, 0.3)",
+              "border-radius": "3px",
+              outline: "none",
+              appearance: "none",
+              "-webkit-appearance": "none",
+            }}
           />
-          <span style={{ "min-width": "30px" }}>
+          <span style={{ 
+            "min-width": "40px",
+            "font-weight": "600",
+            color: "rgba(0, 0, 0, 0.7)",
+            "font-size": "13px",
+            background: "rgba(255, 255, 255, 0.5)",
+            padding: "4px 8px",
+            "border-radius": "8px",
+            border: "1px solid rgba(255, 255, 255, 0.3)"
+          }}>
             {store.brushWidth}px
           </span>
         </div>
@@ -188,13 +403,27 @@ function DrawingApp() {
         <button
           onClick={clearCanvas}
           style={{
-            padding: "8px 16px",
-            background: "#ef4444",
+            padding: "12px 20px",
+            background: "rgba(239, 68, 68, 0.9)",
+            "backdrop-filter": "blur(10px)",
+            "-webkit-backdrop-filter": "blur(10px)",
             color: "white",
-            border: "none",
-            "border-radius": "4px",
+            border: "1px solid rgba(255, 255, 255, 0.2)",
+            "border-radius": "12px",
             cursor: "pointer",
-            "font-weight": "500",
+            "font-weight": "600",
+            "font-size": "14px",
+            "letter-spacing": "0.5px",
+            "box-shadow": "0 4px 16px rgba(239, 68, 68, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1)",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-2px)";
+            e.currentTarget.style.boxShadow = "0 6px 20px rgba(239, 68, 68, 0.4), 0 4px 12px rgba(0, 0, 0, 0.15)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = "0 4px 16px rgba(239, 68, 68, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1)";
           }}
         >
           Clear Canvas
@@ -202,57 +431,24 @@ function DrawingApp() {
       </div>
 
       {/* Canvas */}
-      <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
-        <svg
-          ref={(el) => (svgRef = el)}
-          width="100%"
-          height="100%"
-          style={{
-            background: "white",
-            cursor: "crosshair",
-            "touch-action": "none",
-          }}
-          onMouseDown={(e) => startDrawing(e as any)}
-          onMouseMove={(e) => draw(e as any)}
-          onMouseUp={stopDrawing}
-          onMouseLeave={stopDrawing}
-          onTouchStart={(e) => startDrawing(e as any)}
-          onTouchMove={(e) => draw(e as any)}
-          onTouchEnd={stopDrawing}
-        >
-          {/* Render completed paths */}
-          <For each={store.paths}>
-            {(path) => (
-              <path
-                d={pointsToPath(path.points)}
-                stroke={path.color}
-                stroke-width={path.width}
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                fill="none"
-              />
-            )}
-          </For>
-
-          {/* Render current path being drawn */}
-          {store.currentPath.length > 0 && (
-            <path
-              d={pointsToPath(store.currentPath)}
-              stroke={store.color}
-              stroke-width={store.brushWidth}
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              fill="none"
-            />
-          )}
-        </svg>
-      </div>
+      <Canvas
+        paths={store.paths}
+        currentPath={store.currentPath}
+        viewBox={store.viewBox}
+        color={store.color}
+        brushWidth={store.brushWidth}
+        spacePressed={store.spacePressed}
+        isPanning={store.isPanning}
+        onRef={initializeViewBox}
+        onMouseDown={startDrawing}
+        onMouseMove={draw}
+        onMouseUp={stopDrawing}
+        onMouseLeave={stopDrawing}
+        onTouchStart={startDrawing}
+        onTouchMove={draw}
+        onTouchEnd={stopDrawing}
+        pointsToPath={pointsToPath}
+      />
     </div>
   )
-}
-
-// Mount the app to #app
-const appElement = document.getElementById("app")
-if (appElement) {
-  render(() => <DrawingApp />, appElement)
 }
