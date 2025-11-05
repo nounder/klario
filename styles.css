@@ -1,0 +1,25 @@
+svg {
+  user-select: none;
+  touch-action: none;
+  outline: none;
+  contain: layout style paint;
+}
+
+svg path {
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Cursor styles for different interaction states */
+svg.space-pressed {
+  cursor: grab;
+}
+
+svg.panning {
+  cursor: grabbing;
+}
+
+svg.drawing {
+  cursor: crosshair;
+}

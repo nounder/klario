@@ -57,12 +57,23 @@ export default function App() {
     return point
   }
 
+  const handlePointerDown = (event: PointerEvent) => {
+    // Capture pointer to ensure we receive all events
+    ;(event.target as Element).setPointerCapture(event.pointerId)
+    
+    // Prevent event bubbling that might cause delays
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
   const startDrawing = (e: PointerEvent) => {
+    // Apply pointer capture first
+    handlePointerDown(e)
+    
     if (store.spacePressed) {
       startPanning(e)
       return
     }
-    e.preventDefault()
     const point = getCoordinates(e)
     setStore({
       isDrawing: true,
@@ -293,6 +304,119 @@ export default function App() {
     return path
   }
 
+  // Generate a pressure-sensitive filled path
+  const pointsToVariableWidthPath = (points: Point[], baseBrushWidth: number): string => {
+    if (points.length === 0) return ""
+    
+    if (points.length === 1) {
+      const width = getStrokeWidth(points[0]!, baseBrushWidth) / 2
+      const x = points[0]!.x
+      const y = points[0]!.y
+      return `M ${x - width} ${y} A ${width} ${width} 0 1 1 ${x + width} ${y} A ${width} ${width} 0 1 1 ${x - width} ${y} Z`
+    }
+
+    if (points.length === 2) {
+      // For just two points, create a simple capsule shape
+      const p1 = points[0]!
+      const p2 = points[1]!
+      const width1 = getStrokeWidth(p1, baseBrushWidth) / 2
+      const width2 = getStrokeWidth(p2, baseBrushWidth) / 2
+      
+      const dx = p2.x - p1.x
+      const dy = p2.y - p1.y
+      const length = Math.sqrt(dx * dx + dy * dy)
+      
+      if (length === 0) return ""
+      
+      const perpX = -dy / length
+      const perpY = dx / length
+      
+      const p1Left = { x: p1.x + perpX * width1, y: p1.y + perpY * width1 }
+      const p1Right = { x: p1.x - perpX * width1, y: p1.y - perpY * width1 }
+      const p2Left = { x: p2.x + perpX * width2, y: p2.y + perpY * width2 }
+      const p2Right = { x: p2.x - perpX * width2, y: p2.y - perpY * width2 }
+      
+      return `M ${p1Left.x} ${p1Left.y} L ${p2Left.x} ${p2Left.y} L ${p2Right.x} ${p2Right.y} L ${p1Right.x} ${p1Right.y} Z`
+    }
+
+    // For multiple points, create a more sophisticated path
+    try {
+      const leftSide: { x: number, y: number }[] = []
+      const rightSide: { x: number, y: number }[] = []
+
+      for (let i = 0; i < points.length; i++) {
+        const point = points[i]!
+        const width = getStrokeWidth(point, baseBrushWidth) / 2
+
+        // Calculate perpendicular direction for stroke width
+        let perpX = 0, perpY = 0
+        
+        if (i === 0) {
+          // First point: use direction to next point
+          const nextPoint = points[i + 1]!
+          const dx = nextPoint.x - point.x
+          const dy = nextPoint.y - point.y
+          const length = Math.sqrt(dx * dx + dy * dy)
+          if (length > 0) {
+            perpX = -dy / length
+            perpY = dx / length
+          }
+        } else if (i === points.length - 1) {
+          // Last point: use direction from previous point
+          const prevPoint = points[i - 1]!
+          const dx = point.x - prevPoint.x
+          const dy = point.y - prevPoint.y
+          const length = Math.sqrt(dx * dx + dy * dy)
+          if (length > 0) {
+            perpX = -dy / length
+            perpY = dx / length
+          }
+        } else {
+          // Middle point: use perpendicular to line segment
+          const prevPoint = points[i - 1]!
+          const nextPoint = points[i + 1]!
+          const dx = nextPoint.x - prevPoint.x
+          const dy = nextPoint.y - prevPoint.y
+          const length = Math.sqrt(dx * dx + dy * dy)
+          if (length > 0) {
+            perpX = -dy / length
+            perpY = dx / length
+          }
+        }
+
+        leftSide.push({
+          x: point.x + perpX * width,
+          y: point.y + perpY * width
+        })
+        rightSide.push({
+          x: point.x - perpX * width,
+          y: point.y - perpY * width
+        })
+      }
+
+      if (leftSide.length === 0) return ""
+
+      // Create the path: left side -> right side (reversed) -> close
+      let path = `M ${leftSide[0]!.x} ${leftSide[0]!.y}`
+      
+      // Draw left side
+      for (let i = 1; i < leftSide.length; i++) {
+        path += ` L ${leftSide[i]!.x} ${leftSide[i]!.y}`
+      }
+      
+      // Draw right side in reverse
+      for (let i = rightSide.length - 1; i >= 0; i--) {
+        path += ` L ${rightSide[i]!.x} ${rightSide[i]!.y}`
+      }
+      
+      path += " Z"
+      return path
+    } catch (error) {
+      console.error("Error generating variable width path:", error)
+      return ""
+    }
+  }
+
   // Calculate stroke width based on pressure and tilt
   const getStrokeWidth = (point: Point, baseBrushWidth: number): number => {
     let width = baseBrushWidth
@@ -317,10 +441,8 @@ export default function App() {
 
   // Calculate opacity based on pressure for subtle effect
   const getStrokeOpacity = (point: Point): number => {
-    if (point.pressure !== undefined && store.pressureSensitive) {
-      // Map pressure to opacity (0.3 to 1.0)
-      return 0.3 + (point.pressure * 0.7)
-    }
+    // Always return full opacity to ensure consistent color intensity
+    // between pen and finger/mouse input
     return 1.0
   }
 
@@ -554,6 +676,7 @@ export default function App() {
         onPointerUp={stopDrawing}
         onPointerLeave={stopDrawing}
         pointsToPath={pointsToPath}
+        pointsToVariableWidthPath={pointsToVariableWidthPath}
         getStrokeWidth={getStrokeWidth}
         getStrokeOpacity={getStrokeOpacity}
         getStrokeDasharray={getStrokeDasharray}
