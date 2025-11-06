@@ -1,4 +1,4 @@
-# clario
+# klario
 
-clario is a drawing app for my niece Klara.
-clario is named after her.
+klario is a drawing app for my niece Klara.
+klario is named after her.
