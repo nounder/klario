@@ -5,13 +5,11 @@ import type { AppState } from "./types"
 
 export default function App() {
   const [store, setStore] = createStore<AppState>({
-    strokes: [],
-    currentPath: [],
+    nodes: [],
+    currentTool: "StrokeTool",
+    currentToolInstance: null,
     isDrawing: false,
     activePointerId: null,
-    currentStrokeType: "pen",
-    color: "#000000",
-    inkWidth: 3,
     viewBox: { x: 0, y: 0, width: 100, height: 100 },
     isPanning: false,
     panStart: null,

@@ -22,7 +22,9 @@ const perpendicularDistance = (
 
   // Calculate perpendicular distance
   const numerator = Math.abs(
-    dy * point.x - dx * point.y + lineEnd.x * lineStart.y
+    dy * point.x
+      - dx * point.y
+      + lineEnd.x * lineStart.y
       - lineEnd.y * lineStart.x,
   )
   const denominator = Math.sqrt(dx * dx + dy * dy)
@@ -85,4 +87,3 @@ export const simplifyStroke = (
   }
   return douglasPeucker(points, epsilon)
 }
-

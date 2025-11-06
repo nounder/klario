@@ -1,9 +1,9 @@
 import { createMemo, For } from "solid-js"
 import type { SetStoreFunction } from "solid-js/store"
-import { simplifyStroke } from "./simplification"
-import * as MarkerStroke from "./strokes/MarkerStroke.tsx"
-import * as PenStroke from "./strokes/PenStroke.tsx"
-import type { AppState, Bounds, Stroke, StrokePoint } from "./types"
+import * as Nodes from "./nodes/index.ts"
+import { simplifyStroke } from "./strokes/simplification.ts"
+import * as Tools from "./tools/index.ts"
+import type { AppState, Bounds, Node, StrokePoint } from "./types"
 
 // Simple point type for panning coordinates
 type Point = { x: number; y: number }
@@ -88,12 +88,28 @@ export default function Canvas(props: CanvasProps) {
       return
     }
 
+    if (!store.currentToolInstance) return
+
     const point = getCoordinates(e)
-    setStore({
-      isDrawing: true,
-      activePointerId: e.pointerId,
-      currentPath: [point],
-    })
+    const tool = Tools[store.currentTool]
+
+    // Call the tool's onPointerDown handler with appropriate helpers
+    if (tool && "onPointerDown" in tool && tool.onPointerDown) {
+      tool.onPointerDown({
+        point,
+        state: store.currentToolInstance.state,
+        setState: store.currentToolInstance.setState,
+        setAppStore: (updates: any) => {
+          setStore({
+            ...updates,
+            activePointerId: e.pointerId,
+          })
+        },
+        addNode: (node: Node) => {
+          setStore("nodes", (nodes) => [...nodes, node])
+        },
+      } as any)
+    }
   }
 
   const draw = (e: PointerEvent) => {
@@ -102,9 +118,20 @@ export default function Canvas(props: CanvasProps) {
       return
     }
     if (!store.isDrawing || store.activePointerId !== e.pointerId) return
+    if (!store.currentToolInstance) return
+
     e.preventDefault()
     const point = getCoordinates(e)
-    setStore("currentPath", (prev) => [...prev, point])
+    const tool = Tools[store.currentTool]
+
+    // Call the tool's onPointerMove handler if it exists
+    if (tool && "onPointerMove" in tool && tool.onPointerMove) {
+      tool.onPointerMove({
+        point,
+        state: store.currentToolInstance.state,
+        setState: store.currentToolInstance.setState,
+      })
+    }
   }
 
   const stopDrawing = (e?: PointerEvent) => {
@@ -121,42 +148,30 @@ export default function Canvas(props: CanvasProps) {
       return
     }
 
-    if (store.isDrawing && store.currentPath.length > 0) {
-      // Apply Douglas-Peucker simplification to reduce point count
-      // Epsilon is adaptive: smaller for pen (more detail), larger for marker
-      const epsilonMultiplier = store.currentStrokeType === "pen"
-        ? 0.3
-        : 0.5
-      const epsilon = epsilonMultiplier * Math.max(1, store.inkWidth / 10)
+    if (store.isDrawing && store.currentToolInstance) {
+      const tool = Tools[store.currentTool]
 
-      const originalCount = store.currentPath.length
-      const simplifiedPoints = simplifyStroke(store.currentPath, epsilon)
-      const simplifiedCount = simplifiedPoints.length
-      const reduction = (
-        (originalCount - simplifiedCount) / originalCount * 100
-      )
-        .toFixed(1)
-
-      console.log(
-        `🎨 Douglas-Peucker: ${originalCount} → ${simplifiedCount} points (${reduction}% reduction, epsilon: ${
-          epsilon.toFixed(2)
-        })`,
-      )
-
-      const bounds = calculateBounds(simplifiedPoints)
-
-      const newStroke: Stroke = {
-        type: store.currentStrokeType,
-        points: simplifiedPoints,
-        color: store.color,
-        width: store.inkWidth,
-        bounds,
+      // Call the tool's onPointerUp handler if it exists
+      if (tool && "onPointerUp" in tool && tool.onPointerUp) {
+        tool.onPointerUp({
+          state: store.currentToolInstance.state,
+          setState: store.currentToolInstance.setState,
+          setAppStore: (updates: any) => {
+            setStore({
+              ...updates,
+              activePointerId: null,
+            })
+          },
+          addNode: (node: Node) => {
+            setStore("nodes", (nodes) => [...nodes, node])
+          },
+          calculateBounds,
+          simplifyStroke,
+        })
+      } else {
+        setStore("isDrawing", false)
+        setStore("activePointerId", null)
       }
-
-      setStore("strokes", (strokes) => [...strokes, newStroke])
-      setStore("currentPath", [])
-      setStore("isDrawing", false)
-      setStore("activePointerId", null)
     } else {
       setStore("isDrawing", false)
       setStore("activePointerId", null)
@@ -168,23 +183,39 @@ export default function Canvas(props: CanvasProps) {
   }
 
   const cancelDrawing = (e: PointerEvent) => {
-    if (store.activePointerId === e.pointerId) {
-      setStore({
-        isDrawing: false,
-        activePointerId: null,
-        currentPath: [],
-      })
+    if (store.activePointerId === e.pointerId && store.currentToolInstance) {
+      const tool = Tools[store.currentTool]
+
+      // Call the tool's onPointerCancel handler if it exists
+      if (tool && "onPointerCancel" in tool && tool.onPointerCancel) {
+        tool.onPointerCancel({
+          setState: store.currentToolInstance.setState,
+          setAppStore: (updates: any) => {
+            setStore({
+              ...updates,
+              activePointerId: null,
+            })
+          },
+        })
+      } else {
+        setStore("isDrawing", false)
+        setStore("activePointerId", null)
+      }
+
       releasePointer(e)
     }
   }
 
   // Calculate bounds for a stroke
-  const calculateBounds = (points: StrokePoint[]): Bounds => {
+  const calculateBounds = (
+    points: StrokePoint[],
+    width: number = 10,
+  ): Bounds => {
     if (points.length === 0) {
       return { x: 0, y: 0, width: 0, height: 0 }
     }
 
-    const padding = store.inkWidth * 2 + 10
+    const padding = width * 2 + 10
 
     const xs = points.map(p => p.x)
     const ys = points.map(p => p.y)
@@ -202,16 +233,24 @@ export default function Canvas(props: CanvasProps) {
     }
   }
 
-  // Calculate the bounding box of all strokes
+  // Calculate the bounding box of all nodes
   const canvasBounds = createMemo((): Bounds | null => {
     const allPoints: StrokePoint[] = []
 
-    store.strokes.forEach((stroke) => {
-      allPoints.push(...stroke.points)
+    store.nodes.forEach((node) => {
+      if (node.type === "StrokeNode") {
+        allPoints.push(...node.stroke.points)
+      }
     })
 
-    if (store.currentPath.length > 0) {
-      allPoints.push(...store.currentPath)
+    if (
+      store.currentTool === "StrokeTool"
+      && store.currentToolInstance
+      && store.currentToolInstance.state
+      && store.currentToolInstance.state.currentPath
+      && store.currentToolInstance.state.currentPath.length > 0
+    ) {
+      allPoints.push(...store.currentToolInstance.state.currentPath)
     }
 
     if (allPoints.length === 0) return null
@@ -388,38 +427,44 @@ export default function Canvas(props: CanvasProps) {
         onSelectStart={(e) => e.preventDefault()}
         onDragStart={(e) => e.preventDefault()}
       >
-        {/* Render completed strokes */}
-        <For each={store.strokes}>
-          {(stroke) => {
-            const options = { width: stroke.width, color: stroke.color }
-
-            if (stroke.type === "marker") {
-              return MarkerStroke.render(stroke.points, options)
-            }
-
-            return PenStroke.render(stroke.points, options)
+        {/* Render completed nodes */}
+        <For each={store.nodes}>
+          {(node) => {
+            const renderer = Nodes[node.type]
+            return renderer?.render(node as any)
           }}
         </For>
 
         {/* Render current path being drawn */}
-        {store.currentPath.length > 0 && (() => {
-          const options = { width: store.inkWidth, color: store.color }
+        {(() => {
+          if (
+            store.currentTool !== "StrokeTool"
+            || !store.currentToolInstance
+            || !store.currentToolInstance.state
+            || !store.currentToolInstance.state.currentPath
+          ) {
+            return null
+          }
 
-          if (store.currentStrokeType === "marker") {
-            return (
-              <g style={{ "will-change": "transform" }}>
-                {MarkerStroke.render(store.currentPath, options)}
-              </g>
-            )
+          const toolState = store.currentToolInstance.state
+          if (toolState.currentPath.length === 0) return null
+
+          const node = {
+            type: "StrokeNode" as const,
+            parent: null,
+            bounds: { x: 0, y: 0, width: 0, height: 0 },
+            locked: false,
+            stroke: {
+              type: toolState.strokeType,
+              points: toolState.currentPath,
+              width: toolState.width,
+              color: toolState.color,
+            },
           }
 
           return (
-            <g
-              style={{
-                "will-change": "transform",
-              }}
-            >
-              {PenStroke.render(store.currentPath, options)}
+            <g style={{ "will-change": "transform" }}>
+              {Nodes.StrokeNode.render(node)}
             </g>
           )
         })()}

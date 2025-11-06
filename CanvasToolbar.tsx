@@ -1,197 +1,64 @@
 import { For } from "solid-js"
 import type { SetStoreFunction } from "solid-js/store"
-import type { AppState } from "./types"
+import * as Tools from "./tools/index.ts"
+import type { AppState, ToolType } from "./types"
 
 interface CanvasToolbarProps {
   store: AppState
   setStore: SetStoreFunction<AppState>
 }
 
-// Reusable Label component
-function Label(props: { children: any }) {
-  return (
-    <label
-      style={{
-        "font-weight": "600",
-        color: "rgba(0, 0, 0, 0.8)",
-        "font-size": "14px",
-        "letter-spacing": "0.5px",
-      }}
-    >
-      {props.children}
-    </label>
-  )
-}
-
-// Brush type selector component
-function BrushTypeSelector(props: {
-  currentType: "pen" | "marker"
-  onTypeChange: (type: "pen" | "marker") => void
+function ToolSelector(props: {
+  currentType: ToolType
+  onToolChange: (type: ToolType) => void
 }) {
-  const brushTypes: Array<
-    { type: "pen" | "marker"; label: string }
-  > = [
-    { type: "pen", label: "Pen" },
-    { type: "marker", label: "Marker" },
+  const tools: Array<{ type: ToolType; label: string }> = [
+    { type: "StrokeTool", label: "Stroke" },
+    { type: "ImageTool", label: "Image" },
+    { type: "TextTool", label: "Text" },
+    { type: "GroupTool", label: "Group" },
   ]
 
   return (
-    <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
-      <Label>
-        Brush:
-      </Label>
-      <div style={{ display: "flex", gap: "8px" }}>
-        <For each={brushTypes}>
-          {(brush) => (
-            <button
-              onClick={() => props.onTypeChange(brush.type)}
-              style={{
-                padding: "8px 16px",
-                background: props.currentType === brush.type
-                  ? "rgba(59, 130, 246, 0.9)"
-                  : "rgba(255, 255, 255, 0.5)",
-                color: props.currentType === brush.type
-                  ? "white"
-                  : "rgba(0, 0, 0, 0.7)",
-                border: props.currentType === brush.type
-                  ? "2px solid rgba(59, 130, 246, 1)"
-                  : "2px solid rgba(255, 255, 255, 0.3)",
-                "border-radius": "10px",
-                cursor: "pointer",
-                "font-weight": "600",
-                "font-size": "13px",
-                "letter-spacing": "0.5px",
-                "box-shadow": props.currentType === brush.type
-                  ? "0 4px 16px rgba(59, 130, 246, 0.3)"
-                  : "0 2px 8px rgba(0, 0, 0, 0.1)",
-                transition: "all 0.2s ease",
-                transform: props.currentType === brush.type
-                  ? "scale(1.05)"
-                  : "scale(1)",
-              }}
-              title={brush.label}
-            >
-              {brush.label}
-            </button>
-          )}
-        </For>
-      </div>
-    </div>
-  )
-}
-
-// Color picker subcomponent
-function ColorPicker(
-  props: {
-    colors: string[]
-    currentColor: string
-    onColorChange: (color: string) => void
-  },
-) {
-  return (
-    <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
-      <Label>
-        Color:
-      </Label>
-      <For each={props.colors}>
-        {(c) => (
+    <div style={{ display: "flex", gap: "8px" }}>
+      <For each={tools}>
+        {(tool) => (
           <button
-            onClick={() => props.onColorChange(c)}
+            onClick={() => props.onToolChange(tool.type)}
             style={{
-              width: "36px",
-              height: "36px",
-              border: props.currentColor === c
-                ? "3px solid rgba(0, 0, 0, 0.6)"
+              padding: "8px 16px",
+              background: props.currentType === tool.type
+                ? "rgba(59, 130, 246, 0.9)"
+                : "rgba(255, 255, 255, 0.5)",
+              color: props.currentType === tool.type
+                ? "white"
+                : "rgba(0, 0, 0, 0.7)",
+              border: props.currentType === tool.type
+                ? "2px solid rgba(59, 130, 246, 1)"
                 : "2px solid rgba(255, 255, 255, 0.3)",
-              background: c,
+              "border-radius": "10px",
               cursor: "pointer",
-              "border-radius": "12px",
-              "box-shadow": props.currentColor === c
-                ? "0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.5)"
+              "font-weight": "600",
+              "font-size": "13px",
+              "letter-spacing": "0.5px",
+              "box-shadow": props.currentType === tool.type
+                ? "0 4px 16px rgba(59, 130, 246, 0.3)"
                 : "0 2px 8px rgba(0, 0, 0, 0.1)",
               transition: "all 0.2s ease",
-              transform: props.currentColor === c ? "scale(1.1)" : "scale(1)",
+              transform: props.currentType === tool.type
+                ? "scale(1.05)"
+                : "scale(1)",
             }}
-            title={c}
-          />
+            title={tool.label}
+          >
+            {tool.label}
+          </button>
         )}
       </For>
     </div>
   )
 }
 
-// Range slider subcomponent
-function RangeControl(props: {
-  label: string
-  min: number
-  max: number
-  value: number
-  onChange: (value: number) => void
-  unit?: string
-  width?: string
-}) {
-  return (
-    <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
-      <Label>
-        {props.label}:
-      </Label>
-      <input
-        type="range"
-        min={props.min}
-        max={props.max}
-        value={props.value}
-        onInput={(e) => props.onChange(parseInt(e.currentTarget.value))}
-        style={{
-          width: props.width || "140px",
-          height: "6px",
-          background: "rgba(255, 255, 255, 0.3)",
-          "border-radius": "3px",
-          outline: "none",
-          appearance: "none",
-          "-webkit-appearance": "none",
-        }}
-      />
-      <span
-        style={{
-          "min-width": "40px",
-          "font-weight": "600",
-          color: "rgba(0, 0, 0, 0.7)",
-          "font-size": "13px",
-          background: "rgba(255, 255, 255, 0.5)",
-          padding: "4px 8px",
-          "border-radius": "8px",
-          border: "1px solid rgba(255, 255, 255, 0.3)",
-        }}
-      >
-        {props.value}
-        {props.unit || ""}
-      </span>
-    </div>
-  )
-}
-
-// Checkbox control subcomponent
-function CheckboxControl(props: {
-  label: string
-  checked: boolean
-  onChange: (checked: boolean) => void
-}) {
-  return (
-    <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
-      <Label>
-        <input
-          type="checkbox"
-          checked={props.checked}
-          onChange={(e) => props.onChange(e.currentTarget.checked)}
-          style={{ "margin-right": "6px" }}
-        />
-        {props.label}
-      </Label>
-    </div>
-  )
-}
-
-// Action button subcomponent
 function ActionButton(props: {
   onClick: () => void
   children: any
@@ -231,18 +98,10 @@ function ActionButton(props: {
   )
 }
 
-// Main toolbar component
 export default function CanvasToolbar(props: CanvasToolbarProps) {
-  const colors = [
-    "#000000",
-    "#FF0000",
-    "#00FF00",
-    "#0000FF",
-    "#FFFF00",
-    "#FF00FF",
-    "#00FFFF",
-    "#FFA500",
-  ]
+  const handleToolChange = (type: ToolType) => {
+    props.setStore("currentTool", type)
+  }
 
   return (
     <div
@@ -263,29 +122,21 @@ export default function CanvasToolbar(props: CanvasToolbarProps) {
         "z-index": 10,
       }}
     >
-      <ColorPicker
-        colors={colors}
-        currentColor={props.store.color}
-        onColorChange={(c) => props.setStore("color", c)}
+      <ToolSelector
+        currentType={props.store.currentTool}
+        onToolChange={handleToolChange}
       />
 
-      <BrushTypeSelector
-        currentType={props.store.currentStrokeType}
-        onTypeChange={(type) => props.setStore("currentStrokeType", type)}
-      />
+      {/* Render tool-specific settings */}
+      {(() => {
+        const tool = Tools[props.store.currentTool]
+        const instance = tool?.renderSettings({ setStore: props.setStore })
+        // Store the instance so Canvas can access it
+        props.setStore("currentToolInstance", instance)
+        return instance?.ui
+      })()}
 
-      <RangeControl
-        label="Ink Width"
-        min={1}
-        max={20}
-        value={props.store.inkWidth}
-        onChange={(value) => props.setStore("inkWidth", value)}
-        unit="px"
-      />
-
-      <ActionButton
-        onClick={() => props.setStore({ strokes: [], currentPath: [] })}
-      >
+      <ActionButton onClick={() => props.setStore("nodes", [])}>
         Clear Canvas
       </ActionButton>
     </div>
