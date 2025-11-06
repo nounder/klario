@@ -10,22 +10,89 @@ interface CanvasToolbarProps {
 // Reusable Label component
 function Label(props: { children: any }) {
   return (
-    <label style={{ 
-      "font-weight": "600", 
-      color: "rgba(0, 0, 0, 0.8)",
-      "font-size": "14px",
-      "letter-spacing": "0.5px"
-    }}>
+    <label
+      style={{
+        "font-weight": "600",
+        color: "rgba(0, 0, 0, 0.8)",
+        "font-size": "14px",
+        "letter-spacing": "0.5px",
+      }}
+    >
       {props.children}
     </label>
   )
 }
 
-// Color picker subcomponent
-function ColorPicker(props: { colors: string[], currentColor: string, onColorChange: (color: string) => void }) {
+// Brush type selector component
+function BrushTypeSelector(props: {
+  currentType: "pen" | "marker"
+  onTypeChange: (type: "pen" | "marker") => void
+}) {
+  const brushTypes: Array<
+    { type: "pen" | "marker"; label: string }
+  > = [
+    { type: "pen", label: "Pen" },
+    { type: "marker", label: "Marker" },
+  ]
+
   return (
     <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
-      <Label>Color:</Label>
+      <Label>
+        Brush:
+      </Label>
+      <div style={{ display: "flex", gap: "8px" }}>
+        <For each={brushTypes}>
+          {(brush) => (
+            <button
+              onClick={() => props.onTypeChange(brush.type)}
+              style={{
+                padding: "8px 16px",
+                background: props.currentType === brush.type
+                  ? "rgba(59, 130, 246, 0.9)"
+                  : "rgba(255, 255, 255, 0.5)",
+                color: props.currentType === brush.type
+                  ? "white"
+                  : "rgba(0, 0, 0, 0.7)",
+                border: props.currentType === brush.type
+                  ? "2px solid rgba(59, 130, 246, 1)"
+                  : "2px solid rgba(255, 255, 255, 0.3)",
+                "border-radius": "10px",
+                cursor: "pointer",
+                "font-weight": "600",
+                "font-size": "13px",
+                "letter-spacing": "0.5px",
+                "box-shadow": props.currentType === brush.type
+                  ? "0 4px 16px rgba(59, 130, 246, 0.3)"
+                  : "0 2px 8px rgba(0, 0, 0, 0.1)",
+                transition: "all 0.2s ease",
+                transform: props.currentType === brush.type
+                  ? "scale(1.05)"
+                  : "scale(1)",
+              }}
+              title={brush.label}
+            >
+              {brush.label}
+            </button>
+          )}
+        </For>
+      </div>
+    </div>
+  )
+}
+
+// Color picker subcomponent
+function ColorPicker(
+  props: {
+    colors: string[]
+    currentColor: string
+    onColorChange: (color: string) => void
+  },
+) {
+  return (
+    <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
+      <Label>
+        Color:
+      </Label>
       <For each={props.colors}>
         {(c) => (
           <button
@@ -39,7 +106,7 @@ function ColorPicker(props: { colors: string[], currentColor: string, onColorCha
               background: c,
               cursor: "pointer",
               "border-radius": "12px",
-              "box-shadow": props.currentColor === c 
+              "box-shadow": props.currentColor === c
                 ? "0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.5)"
                 : "0 2px 8px rgba(0, 0, 0, 0.1)",
               transition: "all 0.2s ease",
@@ -65,14 +132,16 @@ function RangeControl(props: {
 }) {
   return (
     <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
-      <Label>{props.label}:</Label>
+      <Label>
+        {props.label}:
+      </Label>
       <input
         type="range"
         min={props.min}
         max={props.max}
         value={props.value}
         onInput={(e) => props.onChange(parseInt(e.currentTarget.value))}
-        style={{ 
+        style={{
           width: props.width || "140px",
           height: "6px",
           background: "rgba(255, 255, 255, 0.3)",
@@ -82,17 +151,20 @@ function RangeControl(props: {
           "-webkit-appearance": "none",
         }}
       />
-      <span style={{ 
-        "min-width": "40px",
-        "font-weight": "600",
-        color: "rgba(0, 0, 0, 0.7)",
-        "font-size": "13px",
-        background: "rgba(255, 255, 255, 0.5)",
-        padding: "4px 8px",
-        "border-radius": "8px",
-        border: "1px solid rgba(255, 255, 255, 0.3)"
-      }}>
-        {props.value}{props.unit || ""}
+      <span
+        style={{
+          "min-width": "40px",
+          "font-weight": "600",
+          color: "rgba(0, 0, 0, 0.7)",
+          "font-size": "13px",
+          background: "rgba(255, 255, 255, 0.5)",
+          padding: "4px 8px",
+          "border-radius": "8px",
+          border: "1px solid rgba(255, 255, 255, 0.3)",
+        }}
+      >
+        {props.value}
+        {props.unit || ""}
       </span>
     </div>
   )
@@ -139,16 +211,19 @@ function ActionButton(props: {
         "font-weight": "600",
         "font-size": "14px",
         "letter-spacing": "0.5px",
-        "box-shadow": "0 4px 16px rgba(239, 68, 68, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1)",
+        "box-shadow":
+          "0 4px 16px rgba(239, 68, 68, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1)",
         transition: "all 0.2s ease",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-2px)";
-        e.currentTarget.style.boxShadow = "0 6px 20px rgba(239, 68, 68, 0.4), 0 4px 12px rgba(0, 0, 0, 0.15)";
+        e.currentTarget.style.transform = "translateY(-2px)"
+        e.currentTarget.style.boxShadow =
+          "0 6px 20px rgba(239, 68, 68, 0.4), 0 4px 12px rgba(0, 0, 0, 0.15)"
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "0 4px 16px rgba(239, 68, 68, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1)";
+        e.currentTarget.style.transform = "translateY(0)"
+        e.currentTarget.style.boxShadow =
+          "0 4px 16px rgba(239, 68, 68, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1)"
       }}
     >
       {props.children}
@@ -178,7 +253,8 @@ export default function CanvasToolbar(props: CanvasToolbarProps) {
         padding: "20px 24px",
         border: "1px solid rgba(255, 255, 255, 0.18)",
         "border-radius": "0 0 20px 20px",
-        "box-shadow": "0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 16px rgba(0, 0, 0, 0.05)",
+        "box-shadow":
+          "0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 16px rgba(0, 0, 0, 0.05)",
         display: "flex",
         gap: "20px",
         "align-items": "center",
@@ -187,38 +263,29 @@ export default function CanvasToolbar(props: CanvasToolbarProps) {
         "z-index": 10,
       }}
     >
-      <ColorPicker 
+      <ColorPicker
         colors={colors}
         currentColor={props.store.color}
         onColorChange={(c) => props.setStore("color", c)}
       />
 
+      <BrushTypeSelector
+        currentType={props.store.currentStrokeType}
+        onTypeChange={(type) => props.setStore("currentStrokeType", type)}
+      />
+
       <RangeControl
-        label="Brush Size"
+        label="Ink Width"
         min={1}
         max={20}
-        value={props.store.brushWidth}
-        onChange={(value) => props.setStore("brushWidth", value)}
+        value={props.store.inkWidth}
+        onChange={(value) => props.setStore("inkWidth", value)}
         unit="px"
       />
 
-      <CheckboxControl
-        label="Pressure"
-        checked={props.store.pressureSensitive}
-        onChange={(checked) => props.setStore("pressureSensitive", checked)}
-      />
-
-      <RangeControl
-        label="Max Pressure"
-        min={5}
-        max={50}
-        value={props.store.maxPressureWidth}
-        onChange={(value) => props.setStore("maxPressureWidth", value)}
-        unit="px"
-        width="100px"
-      />
-
-      <ActionButton onClick={() => props.setStore({ paths: [], currentPath: [] })}>
+      <ActionButton
+        onClick={() => props.setStore({ strokes: [], currentPath: [] })}
+      >
         Clear Canvas
       </ActionButton>
     </div>

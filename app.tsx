@@ -5,19 +5,16 @@ import type { AppState } from "./types"
 
 export default function App() {
   const [store, setStore] = createStore<AppState>({
-    paths: [],
+    strokes: [],
     currentPath: [],
     isDrawing: false,
     activePointerId: null,
+    currentStrokeType: "pen",
     color: "#000000",
-    brushWidth: 3,
+    inkWidth: 3,
     viewBox: { x: 0, y: 0, width: 100, height: 100 },
-    spacePressed: false,
     isPanning: false,
     panStart: null,
-    pressureSensitive: true,
-    maxPressureWidth: 20,
-    tiltSensitive: true,
   })
 
   return (

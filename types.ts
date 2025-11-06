@@ -1,29 +1,39 @@
-export interface Point {
+// Base types
+export interface StrokePoint {
   x: number
   y: number
   pressure?: number
+  // Optional stylus data
   tiltX?: number
   tiltY?: number
   twist?: number
-  altitudeAngle?: number
-  azimuthAngle?: number
-  pointerType?: string
-}
-
-export interface Path {
-  points: Point[]
-  color: string
-  width: number
-  isPenPath?: boolean
-  pressureSensitive?: boolean
 }
 
 export interface Bounds {
-  minX: number
-  minY: number
-  maxX: number
-  maxY: number
+  x: number
+  y: number
+  width: number
+  height: number
 }
+
+// Stroke types (discriminated union)
+export interface PenStroke {
+  type: "pen"
+  points: StrokePoint[]
+  color: string
+  width: number
+  bounds: Bounds
+}
+
+export interface MarkerStroke {
+  type: "marker"
+  points: StrokePoint[]
+  color: string
+  width: number
+  bounds: Bounds
+}
+
+export type Stroke = PenStroke | MarkerStroke
 
 export interface ViewBox {
   x: number
@@ -32,18 +42,16 @@ export interface ViewBox {
   height: number
 }
 
+// Application state
 export interface AppState {
-  paths: Path[]
-  currentPath: Point[]
+  strokes: Stroke[]
+  currentPath: StrokePoint[]
   isDrawing: boolean
   activePointerId: number | null
+  currentStrokeType: "pen" | "marker"
   color: string
-  brushWidth: number
+  inkWidth: number
   viewBox: ViewBox
-  spacePressed: boolean
   isPanning: boolean
-  panStart: Point | null
-  pressureSensitive: boolean
-  maxPressureWidth: number
-  tiltSensitive: boolean
+  panStart: { x: number; y: number } | null
 }

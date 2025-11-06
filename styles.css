@@ -5,19 +5,10 @@ svg {
   -webkit-user-select: none;
   -webkit-touch-action: none;
   outline: none;
-  contain: layout style paint;
   background: white;
-}
-
-svg path {
-  vector-effect: non-scaling-stroke;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-/* Optimize line rendering during active drawing */
-svg line {
-  vector-effect: non-scaling-stroke;
+  /* Force Safari to properly render SVG filters */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 /* Optimize current drawing group */
@@ -27,10 +18,6 @@ svg g {
 }
 
 /* Cursor styles for different interaction states */
-svg.space-pressed {
-  cursor: grab;
-}
-
 svg.panning {
   cursor: grabbing;
 }
