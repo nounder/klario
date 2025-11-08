@@ -6,7 +6,7 @@ import type { AppState, StrokeToolState } from "../types"
 import type { Node, StrokePoint } from "../types"
 
 export const initialState: StrokeToolState = {
-  strokeType: "pen",
+  strokeType: "marker",
   color: "#000000",
   width: 3,
   currentPath: [],

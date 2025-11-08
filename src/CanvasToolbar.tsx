@@ -16,7 +16,6 @@ function ToolSelector(props: {
     { type: "StrokeTool", label: "Stroke" },
     { type: "ImageTool", label: "Image" },
     { type: "TextTool", label: "Text" },
-    { type: "GroupTool", label: "Group" },
   ]
 
   return (
