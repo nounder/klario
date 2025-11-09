@@ -11,6 +11,18 @@ export const initialState: GroupToolState = {
   selectedNodes: [],
 }
 
+export function onPointerEnter(helpers: {
+  setAppStore: (updates: any) => void
+}) {
+  helpers.setAppStore({ rootStyle: {} })
+}
+
+export function onPointerLeave(helpers: {
+  setAppStore: (updates: any) => void
+}) {
+  helpers.setAppStore({ rootStyle: {} })
+}
+
 // TODO: Implement node selection logic
 // export function onPointerDown() {
 // }
@@ -63,8 +75,5 @@ export function renderSettings(props: {
         </button>
       </>
     ),
-    renderNode: () => {
-      return null
-    },
   }
 }

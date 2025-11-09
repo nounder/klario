@@ -17,6 +17,18 @@ export const initialState: NodeEraserToolState = {
   intersectedNodeIds: new Set(),
 }
 
+export function onPointerEnter(helpers: {
+  setAppStore: (updates: any) => void
+}) {
+  helpers.setAppStore({ rootStyle: { cursor: "none" } })
+}
+
+export function onPointerLeave(helpers: {
+  setAppStore: (updates: any) => void
+}) {
+  helpers.setAppStore({ rootStyle: {} })
+}
+
 // Helper function to check if a point is within a certain distance of a line segment
 function pointToSegmentDistance(
   p: StrokePoint,
@@ -381,7 +393,7 @@ export function onPointerCancel(helpers: {
   helpers.setAppStore({ isDrawing: false })
 }
 
-export function renderSettings(_props: {
+export function renderSettings(props: {
   setStore: SetStoreFunction<AppState>
   activeNode: Node | null
 }) {
@@ -436,12 +448,9 @@ export function renderSettings(_props: {
         </div>
       </>
     ),
-    renderNode: () => {
-      return null
-    },
     renderCanvas: (props: ToolCanvasProps) => {
       return (
-        <g style={{ "will-change": "transform" }}>
+        <g style={{ "will-change": "transform", cursor: "none" }}>
           {/* Render temporary eraser path preview while drawing */}
           {state.currentPath.length > 0 && (() => {
             const points = state.currentPath

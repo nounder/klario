@@ -146,9 +146,32 @@ export default function Canvas(props: CanvasProps) {
     }
   }
 
+  const handlePointerEnter = (e: PointerEvent) => {
+    if (!store.currentToolInstance) return
+    
+    const tool = Tools[store.currentTool]
+    
+    // Call the tool's onPointerEnter handler if it exists
+    tool?.onPointerEnter?.({
+      setAppStore: (updates: any) => {
+        setStore(updates)
+      },
+    } as any)
+  }
+
   const handlePointerLeave = (e: PointerEvent) => {
     // Clear pointer position when leaving canvas
     setStore("pointerPosition", null)
+    
+    // Call the tool's onPointerLeave handler if it exists
+    if (store.currentToolInstance) {
+      const tool = Tools[store.currentTool]
+      tool?.onPointerLeave?.({
+        setAppStore: (updates: any) => {
+          setStore(updates)
+        },
+      } as any)
+    }
     
     stopDrawing(e)
   }
@@ -463,7 +486,9 @@ export default function Canvas(props: CanvasProps) {
           cursor: store.isPanning && store.panStart === null
             ? "grab"
             : undefined,
+          ...store.rootStyle,
         }}
+        onPointerEnter={(e) => handlePointerEnter(e)}
         onPointerDown={(e) => startDrawing(e)}
         onPointerMove={(e) => draw(e)}
         onPointerUp={(e) => stopDrawing(e)}

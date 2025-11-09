@@ -17,6 +17,18 @@ export const initialState: StrokeToolState = {
   currentPath: [],
 }
 
+export function onPointerEnter(helpers: {
+  setAppStore: (updates: any) => void
+}) {
+  helpers.setAppStore({ rootStyle: { cursor: "none" } })
+}
+
+export function onPointerLeave(helpers: {
+  setAppStore: (updates: any) => void
+}) {
+  helpers.setAppStore({ rootStyle: {} })
+}
+
 export function onPointerDown(helpers: {
   point: StrokePoint
   setState: (key: string, value: any) => void
@@ -90,6 +102,7 @@ export function renderSettings(props: {
   activeNode: Node | null
 }) {
   const [state, setState] = createStore<StrokeToolState>(initialState)
+  
   const colors = [
     "#000000",
     "#FF0000",
@@ -213,33 +226,42 @@ export function renderSettings(props: {
         </div>
       </>
     ),
-    renderNode: () => {
-      return null
-    },
-    renderCanvas: (_props: ToolCanvasProps) => {
-      // Render temporary stroke preview while drawing
-      if (state.currentPath.length > 0) {
-        const node = {
-          id: "temp",
-          type: "StrokeNode" as const,
-          parent: null,
-          bounds: { x: 0, y: 0, width: 0, height: 0 },
-          locked: false,
-          stroke: {
-            type: state.strokeType,
-            points: state.currentPath,
-            width: state.width,
-            color: state.color,
-          },
-        }
+    renderCanvas: (props: ToolCanvasProps) => {
+      return (
+        <g style={{ "will-change": "transform", cursor: "none" }}>
+          {/* Render temporary stroke preview while drawing */}
+          {state.currentPath.length > 0 && (() => {
+            const node = {
+              id: "temp",
+              type: "StrokeNode" as const,
+              parent: null,
+              bounds: { x: 0, y: 0, width: 0, height: 0 },
+              locked: false,
+              stroke: {
+                type: state.strokeType,
+                points: state.currentPath,
+                width: state.width,
+                color: state.color,
+              },
+            }
 
-        return (
-          <g style={{ "will-change": "transform" }}>
-            {StrokeNode.render(node)}
-          </g>
-        )
-      }
-      return null
+            return StrokeNode.render(node)
+          })()}
+
+          {/* Render cursor circle */}
+          {props.pointerPosition && (
+            <circle
+              cx={props.pointerPosition.x}
+              cy={props.pointerPosition.y}
+              r={state.width / 2}
+              fill="none"
+              stroke={state.color}
+              stroke-opacity={0.5}
+              pointer-events="none"
+            />
+          )}
+        </g>
+      )
     },
   }
 }

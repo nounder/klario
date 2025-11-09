@@ -200,4 +200,5 @@ export interface AppState {
   panStart: { x: number; y: number } | null
   activeNodeId: string | null
   pointerPosition: Point | null
+  rootStyle: Record<string, string>
 }

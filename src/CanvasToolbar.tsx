@@ -1,4 +1,4 @@
-import { For } from "solid-js"
+import { createEffect, For } from "solid-js"
 import type { SetStoreFunction } from "solid-js/store"
 import * as Tools from "./tools/index.ts"
 import type { AppState, ToolType } from "./types"
@@ -127,6 +127,19 @@ export default function CanvasToolbar(props: CanvasToolbarProps) {
     props.setStore("currentTool", type)
   }
 
+  // Update tool instance when tool changes
+  createEffect(() => {
+    const tool = Tools[props.store.currentTool]
+    const activeNode = props.store.nodes.find(n =>
+      n.id === props.store.activeNodeId
+    )
+    const instance = tool?.renderSettings({
+      setStore: props.setStore,
+      activeNode: activeNode || null,
+    })
+    props.setStore({ currentToolInstance: instance || null })
+  })
+
   return (
     <div
       style={{
@@ -152,19 +165,7 @@ export default function CanvasToolbar(props: CanvasToolbarProps) {
       />
 
       {/* Render tool-specific settings */}
-      {(() => {
-        const tool = Tools[props.store.currentTool]
-        const activeNode = props.store.nodes.find(n =>
-          n.id === props.store.activeNodeId
-        )
-        const instance = tool?.renderSettings({
-          setStore: props.setStore,
-          activeNode: activeNode || null,
-        })
-        // Store the instance so Canvas can access it
-        props.setStore("currentToolInstance", instance)
-        return instance?.ui
-      })()}
+      {props.store.currentToolInstance?.ui}
 
       <ActionButton
         onClick={() => {

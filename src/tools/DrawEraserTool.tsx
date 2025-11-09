@@ -13,6 +13,18 @@ export const initialState: DrawEraserToolState = {
   currentPath: [],
 }
 
+export function onPointerEnter(helpers: {
+  setAppStore: (updates: any) => void
+}) {
+  helpers.setAppStore({ rootStyle: { cursor: "none" } })
+}
+
+export function onPointerLeave(helpers: {
+  setAppStore: (updates: any) => void
+}) {
+  helpers.setAppStore({ rootStyle: {} })
+}
+
 export function onPointerDown(helpers: {
   point: StrokePoint
   setState: (key: string, value: any) => void
@@ -76,7 +88,7 @@ export function onPointerCancel(helpers: {
   helpers.setAppStore({ isDrawing: false })
 }
 
-export function renderSettings(_props: {
+export function renderSettings(props: {
   setStore: SetStoreFunction<AppState>
   activeNode: Node | null
 }) {
@@ -131,29 +143,38 @@ export function renderSettings(_props: {
         </div>
       </>
     ),
-    renderNode: () => {
-      return null
-    },
-    renderCanvas: (_props: ToolCanvasProps) => {
-      // Render temporary eraser stroke preview while drawing
-      if (state.currentPath.length > 0) {
-        const node = {
-          id: "temp",
-          type: "DrawEraserNode" as const,
-          parent: null,
-          bounds: { x: 0, y: 0, width: 0, height: 0 },
-          locked: false,
-          points: state.currentPath,
-          width: state.width,
-        }
+    renderCanvas: (props: ToolCanvasProps) => {
+      return (
+        <g style={{ "will-change": "transform", cursor: "none" }}>
+          {/* Render temporary eraser stroke preview while drawing */}
+          {state.currentPath.length > 0 && (() => {
+            const node = {
+              id: "temp",
+              type: "DrawEraserNode" as const,
+              parent: null,
+              bounds: { x: 0, y: 0, width: 0, height: 0 },
+              locked: false,
+              points: state.currentPath,
+              width: state.width,
+            }
 
-        return (
-          <g style={{ "will-change": "transform" }}>
-            {DrawEraserNode.render(node)}
-          </g>
-        )
-      }
-      return null
+            return DrawEraserNode.render(node)
+          })()}
+
+          {/* Render cursor circle */}
+          {props.pointerPosition && (
+            <circle
+              cx={props.pointerPosition.x}
+              cy={props.pointerPosition.y}
+              r={state.width / 2}
+              fill="none"
+              stroke="rgba(0, 0, 0, 0.3)"
+              stroke-width={2}
+              pointer-events="none"
+            />
+          )}
+        </g>
+      )
     },
   }
 }

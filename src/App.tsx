@@ -15,6 +15,7 @@ export default function App() {
     panStart: null,
     activeNodeId: null,
     pointerPosition: null,
+    rootStyle: {},
   })
 
   return (
