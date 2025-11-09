@@ -4,15 +4,16 @@ import type { SetStoreFunction } from "solid-js/store"
 import type { AppState, StrokeToolState } from "../types"
 
 import * as StrokeNode from "../nodes/StrokeNode"
+import type { StrokeType } from "../strokes/index.ts"
 import type { Node, StrokePoint } from "../types"
 import * as Unique from "../Unique"
 
 export const NodeType = StrokeNode.Type
 
 export const initialState: StrokeToolState = {
-  strokeType: "marker",
+  strokeType: "MarkerStroke",
   color: "#000000",
-  width: 3,
+  width: 6,
   currentPath: [],
 }
 
@@ -50,7 +51,7 @@ export function onPointerUp(helpers: {
 
   if (state.currentPath.length > 0) {
     // Apply Douglas-Peucker simplification
-    const epsilonMultiplier = state.strokeType === "pen" ? 0.3 : 0.5
+    const epsilonMultiplier = state.strokeType === "PenStroke" ? 0.3 : 0.5
     const epsilon = epsilonMultiplier * Math.max(1, state.width / 10)
     const simplifiedPoints = helpers.simplifyStroke(state.currentPath, epsilon)
     const bounds = helpers.calculateBounds(simplifiedPoints, state.width)
@@ -100,9 +101,11 @@ export function renderSettings(props: {
     "#FFA500",
   ]
 
-  const brushTypes: Array<{ type: "pen" | "marker"; label: string }> = [
-    { type: "pen", label: "Pen" },
-    { type: "marker", label: "Marker" },
+  const brushTypes: Array<
+    { type: StrokeType; label: string }
+  > = [
+    { type: "PenStroke", label: "Pen" },
+    { type: "MarkerStroke", label: "Marker" },
   ]
 
   return {

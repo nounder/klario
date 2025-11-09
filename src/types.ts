@@ -18,7 +18,7 @@ export interface Bounds {
 
 // Stroke types (discriminated union)
 export interface PenStroke {
-  type: "pen"
+  type: "PenStroke"
   points: StrokePoint[]
   color: string
   width: number
@@ -26,7 +26,7 @@ export interface PenStroke {
 }
 
 export interface MarkerStroke {
-  type: "marker"
+  type: "MarkerStroke"
   points: StrokePoint[]
   color: string
   width: number
@@ -45,8 +45,8 @@ export interface ViewBox {
 }
 
 export type StrokeType =
-  | "pen"
-  | "marker"
+  | "PenStroke"
+  | "MarkerStroke"
 
 // Node types
 export interface NodeBase {

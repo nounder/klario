@@ -1,5 +1,5 @@
 import * as Strokes from "../strokes/index.ts"
-import type { Node as NodeType, StrokeNode } from "../types"
+import type { Node, StrokeNode } from "../types"
 
 export const Type = "StrokeNode"
 
@@ -7,7 +7,7 @@ export function render(
   node: StrokeNode,
   ctx?: {
     activeNodeId: string | null
-    onChange: (node: NodeType) => NodeType
+    onChange: (node: Node) => Node
   },
 ) {
   const options = {
@@ -16,10 +16,7 @@ export function render(
   }
 
   // Map stroke type to stroke renderer
-  const strokeTypeName = node.stroke.type === "marker"
-    ? "MarkerStroke"
-    : "PenStroke"
-  const renderer = Strokes[strokeTypeName]
+  const renderer = Strokes[node.stroke.type]
 
   return renderer?.render(node.stroke.points, options)
 }
