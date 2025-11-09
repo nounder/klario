@@ -99,6 +99,28 @@ function ActionButton(props: {
 
 export default function CanvasToolbar(props: CanvasToolbarProps) {
   const handleToolChange = (type: ToolType) => {
+    // Check if active node matches the new tool
+    const activeNode = props.store.nodes.find(n =>
+      n.id === props.store.activeNodeId
+    )
+
+    if (activeNode) {
+      const nodeToolMap: Record<string, ToolType> = {
+        "StrokeNode": "StrokeTool",
+        "TextNode": "TextTool",
+        "ImageNode": "ImageTool",
+        "GroupNode": "GroupTool",
+      }
+
+      const matchingTool = nodeToolMap[activeNode.type]
+
+      // If switching to a tool that doesn't match the active node, deselect
+      // This will also stop editing (isEditingText is derived from activeNodeId)
+      if (matchingTool !== type) {
+        props.setStore("activeNodeId", null)
+      }
+    }
+
     props.setStore("currentTool", type)
   }
 
@@ -129,13 +151,24 @@ export default function CanvasToolbar(props: CanvasToolbarProps) {
       {/* Render tool-specific settings */}
       {(() => {
         const tool = Tools[props.store.currentTool]
-        const instance = tool?.renderSettings({ setStore: props.setStore })
+        const activeNode = props.store.nodes.find(n =>
+          n.id === props.store.activeNodeId
+        )
+        const instance = tool?.renderSettings({
+          setStore: props.setStore,
+          activeNode: activeNode || null,
+        })
         // Store the instance so Canvas can access it
         props.setStore("currentToolInstance", instance)
         return instance?.ui
       })()}
 
-      <ActionButton onClick={() => props.setStore("nodes", [])}>
+      <ActionButton
+        onClick={() => {
+          props.setStore("nodes", [])
+          props.setStore("activeNodeId", null)
+        }}
+      >
         Clear Canvas
       </ActionButton>
     </div>

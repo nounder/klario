@@ -1,4 +1,4 @@
-import { createMemo, For } from "solid-js"
+import { createEffect, createMemo, For } from "solid-js"
 import type { SetStoreFunction } from "solid-js/store"
 import * as Nodes from "./nodes/index.ts"
 import { simplifyStroke } from "./strokes/simplification.ts"
@@ -153,14 +153,26 @@ export default function Canvas(props: CanvasProps) {
 
       // Call the tool's onPointerUp handler if it exists
       if (tool && "onPointerUp" in tool && tool.onPointerUp) {
+        const point = e ? getCoordinates(e) : { x: 0, y: 0 }
         tool.onPointerUp({
+          point,
           state: store.currentToolInstance.state,
           setState: store.currentToolInstance.setState,
           setAppStore: (updates: any) => {
-            setStore({
-              ...updates,
-              activePointerId: null,
-            })
+            if (typeof updates === "function") {
+              // Handle function updates
+              const newState = updates(store)
+              setStore({
+                ...newState,
+                activePointerId: null,
+              })
+            } else {
+              // Handle object updates
+              setStore({
+                ...updates,
+                activePointerId: null,
+              })
+            }
           },
           addNode: (node: Node) => {
             setStore("nodes", (nodes) => [...nodes, node])
@@ -231,6 +243,15 @@ export default function Canvas(props: CanvasProps) {
       width: maxX - minX,
       height: maxY - minY,
     }
+  }
+
+  // Handle node changes
+  const handleNodeChange = (updatedNode: Node): Node => {
+    const nodeIndex = store.nodes.findIndex((n) => n.id === updatedNode.id)
+    if (nodeIndex !== -1) {
+      setStore("nodes", nodeIndex, updatedNode)
+    }
+    return updatedNode
   }
 
   // Calculate the bounding box of all nodes
@@ -423,6 +444,12 @@ export default function Canvas(props: CanvasProps) {
         onPointerUp={(e) => stopDrawing(e)}
         onPointerLeave={(e) => stopDrawing(e)}
         onPointerCancel={(e) => cancelDrawing(e)}
+        onClick={(e) => {
+          // Deselect when clicking canvas background
+          if (e.target === e.currentTarget) {
+            setStore("activeNodeId", null)
+          }
+        }}
         onContextMenu={(e) => e.preventDefault()}
         onSelectStart={(e) => e.preventDefault()}
         onDragStart={(e) => e.preventDefault()}
@@ -430,8 +457,12 @@ export default function Canvas(props: CanvasProps) {
         {/* Render completed nodes */}
         <For each={store.nodes}>
           {(node) => {
+            const ctx = {
+              activeNodeId: store.activeNodeId,
+              onChange: handleNodeChange,
+            }
             const renderer = Nodes[node.type]
-            return renderer?.render(node as any)
+            return renderer?.render(node as never, ctx)
           }}
         </For>
 
@@ -450,6 +481,7 @@ export default function Canvas(props: CanvasProps) {
           if (toolState.currentPath.length === 0) return null
 
           const node = {
+            id: "temp",
             type: "StrokeNode" as const,
             parent: null,
             bounds: { x: 0, y: 0, width: 0, height: 0 },

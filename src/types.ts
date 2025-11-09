@@ -50,6 +50,7 @@ export type StrokeType =
 
 // Node types
 export interface NodeBase {
+  id: string
   type: NodeType
   parent: Node | null
   bounds: Bounds
@@ -105,7 +106,6 @@ export interface ImageToolState {
 }
 
 export interface TextToolState {
-  content: string
   fontSize: number
   color: string
 }
@@ -156,4 +156,5 @@ export interface AppState {
   viewBox: ViewBox
   isPanning: boolean
   panStart: { x: number; y: number } | null
+  activeNodeId: string | null
 }

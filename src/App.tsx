@@ -13,6 +13,7 @@ export default function App() {
     viewBox: { x: 0, y: 0, width: 100, height: 100 },
     isPanning: false,
     panStart: null,
+    activeNodeId: null,
   })
 
   return (

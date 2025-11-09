@@ -25,3 +25,15 @@ svg.panning {
 svg.drawing {
   cursor: crosshair;
 }
+
+/* Selection visual feedback */
+.klario-selected {
+  outline: 2px solid rgba(59, 130, 246, 0.8);
+  outline-offset: 2px;
+}
+
+.klario-selected text,
+.klario-selected path,
+.klario-selected image {
+  filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.6));
+}

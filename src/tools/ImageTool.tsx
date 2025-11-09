@@ -2,7 +2,11 @@ import { createStore } from "solid-js/store"
 import type { SetStoreFunction } from "solid-js/store"
 import type { AppState, ImageToolState } from "../types"
 
+import * as ImageNode from "../nodes/ImageNode"
 import type { Node, StrokePoint } from "../types"
+import * as Unique from "../Unique"
+
+export const NodeType = ImageNode.Type
 
 export const initialState: ImageToolState = {
   uri: "",
@@ -17,6 +21,7 @@ export function onPointerDown(helpers: {
 }) {
   if (helpers.state.uri) {
     const newNode: Node = {
+      id: Unique.token(16),
       type: "ImageNode",
       parent: null,
       bounds: {
@@ -34,6 +39,7 @@ export function onPointerDown(helpers: {
 
 export function renderSettings(props: {
   setStore: SetStoreFunction<AppState>
+  activeNode: Node | null
 }) {
   const [state, setState] = createStore<ImageToolState>(initialState)
 

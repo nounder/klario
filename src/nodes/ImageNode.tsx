@@ -1,6 +1,14 @@
-import type { ImageNode } from "../types"
+import type { ImageNode, Node as NodeType } from "../types"
 
-export function render(node: ImageNode) {
+export const Type = "ImageNode"
+
+export function render(
+  node: ImageNode,
+  ctx?: {
+    activeNodeId: string | null
+    onChange: (node: NodeType) => NodeType
+  },
+) {
   return (
     <image
       href={node.uri}

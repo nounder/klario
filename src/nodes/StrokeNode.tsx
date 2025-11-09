@@ -1,7 +1,15 @@
 import * as Strokes from "../strokes/index.ts"
-import type { StrokeNode } from "../types"
+import type { Node as NodeType, StrokeNode } from "../types"
 
-export function render(node: StrokeNode) {
+export const Type = "StrokeNode"
+
+export function render(
+  node: StrokeNode,
+  ctx?: {
+    activeNodeId: string | null
+    onChange: (node: NodeType) => NodeType
+  },
+) {
   const options = {
     width: node.stroke.width,
     color: node.stroke.color,
@@ -15,4 +23,3 @@ export function render(node: StrokeNode) {
 
   return renderer?.render(node.stroke.points, options)
 }
-

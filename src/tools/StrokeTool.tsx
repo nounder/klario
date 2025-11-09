@@ -3,7 +3,11 @@ import { createStore } from "solid-js/store"
 import type { SetStoreFunction } from "solid-js/store"
 import type { AppState, StrokeToolState } from "../types"
 
+import * as StrokeNode from "../nodes/StrokeNode"
 import type { Node, StrokePoint } from "../types"
+import * as Unique from "../Unique"
+
+export const NodeType = StrokeNode.Type
 
 export const initialState: StrokeToolState = {
   strokeType: "marker",
@@ -52,6 +56,7 @@ export function onPointerUp(helpers: {
     const bounds = helpers.calculateBounds(simplifiedPoints, state.width)
 
     const newNode: Node = {
+      id: Unique.token(16),
       type: "StrokeNode",
       parent: null,
       bounds,
@@ -81,6 +86,7 @@ export function onPointerCancel(helpers: {
 
 export function renderSettings(props: {
   setStore: SetStoreFunction<AppState>
+  activeNode: Node | null
 }) {
   const [state, setState] = createStore<StrokeToolState>(initialState)
   const colors = [

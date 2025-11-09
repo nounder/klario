@@ -3,40 +3,63 @@ import { createStore } from "solid-js/store"
 import type { SetStoreFunction } from "solid-js/store"
 import type { AppState, TextToolState } from "../types"
 
+import * as TextNode from "../nodes/TextNode"
 import type { Node, StrokePoint } from "../types"
+import * as Unique from "../Unique"
+
+export const NodeType = TextNode.Type
 
 export const initialState: TextToolState = {
-  content: "",
   fontSize: 24,
   color: "#000000",
 }
 
 export function onPointerDown(helpers: {
+  setAppStore: (updates: any) => void
+}) {
+  helpers.setAppStore({
+    isDrawing: true,
+  })
+}
+
+export function onPointerUp(helpers: {
   point: StrokePoint
   state: TextToolState
-  addNode: (node: Node) => void
+  setAppStore: (updates: any) => void
+  addNode?: (node: Node) => void
+  getAppState?: () => any
 }) {
-  if (helpers.state.content) {
-    const newNode: Node = {
-      type: "TextNode",
-      parent: null,
-      bounds: {
-        x: helpers.point.x,
-        y: helpers.point.y,
-        width: helpers.state.content.length * helpers.state.fontSize * 0.6,
-        height: helpers.state.fontSize,
-      },
-      locked: false,
-      content: helpers.state.content,
-      fontSize: helpers.state.fontSize,
-      color: helpers.state.color,
-    }
-    helpers.addNode(newNode)
+  // Create a new TextNode with empty content and unique ID
+  const nodeId = Unique.token(16)
+  const newNode: Node = {
+    id: nodeId,
+    type: "TextNode",
+    parent: null,
+    bounds: {
+      x: helpers.point.x,
+      y: helpers.point.y,
+      width: 200,
+      height: helpers.state.fontSize * 2,
+    },
+    locked: false,
+    content: "",
+    fontSize: helpers.state.fontSize,
+    color: helpers.state.color,
   }
+
+  // Set both the new node and activeNodeId in a single update
+  // This ensures the node is rendered with activeNodeId already set
+  // isEditingText is derived from activeNodeId + node type
+  helpers.setAppStore((prevState: any) => ({
+    nodes: [...prevState.nodes, newNode],
+    activeNodeId: nodeId,
+    isDrawing: false,
+  }))
 }
 
 export function renderSettings(props: {
   setStore: SetStoreFunction<AppState>
+  activeNode: Node | null
 }) {
   const [state, setState] = createStore<TextToolState>(initialState)
 
@@ -56,23 +79,6 @@ export function renderSettings(props: {
     setState,
     ui: (
       <>
-        <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
-          <input
-            type="text"
-            placeholder="Enter text"
-            value={state.content}
-            onInput={(e) => setState("content", e.currentTarget.value)}
-            style={{
-              padding: "8px 12px",
-              background: "rgba(255, 255, 255, 0.5)",
-              border: "2px solid rgba(255, 255, 255, 0.3)",
-              "border-radius": "10px",
-              "font-size": "13px",
-              "min-width": "200px",
-            }}
-          />
-        </div>
-
         {/* Color Picker */}
         <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
           <For each={colors}>
