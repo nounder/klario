@@ -1,7 +1,7 @@
 import { For } from "solid-js"
 import { createStore } from "solid-js/store"
 import type { SetStoreFunction } from "solid-js/store"
-import type { AppState, StrokeToolState } from "../types"
+import type { AppState, StrokeToolState, ToolCanvasProps } from "../types"
 
 import * as StrokeNode from "../nodes/StrokeNode"
 import type { StrokeType } from "../strokes/index.ts"
@@ -216,7 +216,7 @@ export function renderSettings(props: {
     renderNode: () => {
       return null
     },
-    renderCanvas: () => {
+    renderCanvas: (_props: ToolCanvasProps) => {
       // Render temporary stroke preview while drawing
       if (state.currentPath.length > 0) {
         const node = {

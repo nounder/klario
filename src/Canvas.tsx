@@ -118,6 +118,13 @@ export default function Canvas(props: CanvasProps) {
       pan(e)
       return
     }
+
+    // Update pointer position in app state
+    if (!store.isPanning) {
+      const point = getCoordinates(e)
+      setStore("pointerPosition", { x: point.x, y: point.y })
+    }
+
     if (!store.isDrawing || store.activePointerId !== e.pointerId) return
     if (!store.currentToolInstance) return
 
@@ -137,6 +144,13 @@ export default function Canvas(props: CanvasProps) {
         nodes: store.nodes,
       } as any)
     }
+  }
+
+  const handlePointerLeave = (e: PointerEvent) => {
+    // Clear pointer position when leaving canvas
+    setStore("pointerPosition", null)
+    
+    stopDrawing(e)
   }
 
   const stopDrawing = (e?: PointerEvent) => {
@@ -453,7 +467,7 @@ export default function Canvas(props: CanvasProps) {
         onPointerDown={(e) => startDrawing(e)}
         onPointerMove={(e) => draw(e)}
         onPointerUp={(e) => stopDrawing(e)}
-        onPointerLeave={(e) => stopDrawing(e)}
+        onPointerLeave={(e) => handlePointerLeave(e)}
         onPointerCancel={(e) => cancelDrawing(e)}
         onClick={(e) => {
           // Deselect when clicking canvas background
@@ -478,7 +492,7 @@ export default function Canvas(props: CanvasProps) {
         </For>
 
         {/* Render tool-specific canvas overlays (optional renderCanvas method) */}
-        {store.currentToolInstance?.renderCanvas?.()}
+        {store.currentToolInstance?.renderCanvas?.({ pointerPosition: store.pointerPosition })}
       </svg>
     </div>
   )

@@ -1,4 +1,9 @@
 // Base types
+export interface Point {
+  x: number
+  y: number
+}
+
 export interface StrokePoint {
   x: number
   y: number
@@ -7,6 +12,10 @@ export interface StrokePoint {
   tiltX?: number
   tiltY?: number
   twist?: number
+}
+
+export interface ToolCanvasProps {
+  pointerPosition: Point | null
 }
 
 export interface Bounds {
@@ -190,4 +199,5 @@ export interface AppState {
   isPanning: boolean
   panStart: { x: number; y: number } | null
   activeNodeId: string | null
+  pointerPosition: Point | null
 }

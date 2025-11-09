@@ -6,6 +6,7 @@ import type {
   Node,
   NodeEraserToolState,
   StrokePoint,
+  ToolCanvasProps,
 } from "../types"
 
 export const NodeType = null // Eraser doesn't create nodes
@@ -14,7 +15,6 @@ export const initialState: NodeEraserToolState = {
   width: 20,
   currentPath: [],
   intersectedNodeIds: new Set(),
-  cursorPosition: null,
 }
 
 // Helper function to check if a point is within a certain distance of a line segment
@@ -439,31 +439,45 @@ export function renderSettings(_props: {
     renderNode: () => {
       return null
     },
-    renderCanvas: () => {
-      // Render temporary eraser path preview while drawing
-      if (state.currentPath.length > 0) {
-        const points = state.currentPath
+    renderCanvas: (props: ToolCanvasProps) => {
+      return (
+        <g style={{ "will-change": "transform" }}>
+          {/* Render temporary eraser path preview while drawing */}
+          {state.currentPath.length > 0 && (() => {
+            const points = state.currentPath
 
-        // Create a path string for the eraser
-        const pathData = points
-          .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`)
-          .join(" ")
+            // Create a path string for the eraser
+            const pathData = points
+              .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`)
+              .join(" ")
 
-        return (
-          <g style={{ "will-change": "transform" }}>
-            <path
-              d={pathData}
-              stroke="rgba(255, 0, 0, 0.3)"
-              stroke-width={state.width}
-              stroke-linecap="round"
-              stroke-linejoin="round"
+            return (
+              <path
+                d={pathData}
+                stroke="rgba(255, 0, 0, 0.3)"
+                stroke-width={state.width}
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                fill="none"
+                opacity={0.5}
+              />
+            )
+          })()}
+
+          {/* Render cursor circle */}
+          {props.pointerPosition && (
+            <circle
+              cx={props.pointerPosition.x}
+              cy={props.pointerPosition.y}
+              r={state.width / 2}
               fill="none"
-              opacity={0.5}
+              stroke="rgba(255, 0, 0, 0.5)"
+              stroke-width={2}
+              pointer-events="none"
             />
-          </g>
-        )
-      }
-      return null
+          )}
+        </g>
+      )
     },
   }
 }

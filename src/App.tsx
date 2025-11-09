@@ -14,6 +14,7 @@ export default function App() {
     isPanning: false,
     panStart: null,
     activeNodeId: null,
+    pointerPosition: null,
   })
 
   return (

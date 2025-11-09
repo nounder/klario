@@ -1,6 +1,6 @@
 import { createStore } from "solid-js/store"
 import type { SetStoreFunction } from "solid-js/store"
-import type { AppState, DrawEraserToolState } from "../types"
+import type { AppState, DrawEraserToolState, ToolCanvasProps } from "../types"
 
 import * as DrawEraserNode from "../nodes/DrawEraserNode"
 import type { Node, StrokePoint } from "../types"
@@ -134,7 +134,7 @@ export function renderSettings(_props: {
     renderNode: () => {
       return null
     },
-    renderCanvas: () => {
+    renderCanvas: (_props: ToolCanvasProps) => {
       // Render temporary eraser stroke preview while drawing
       if (state.currentPath.length > 0) {
         const node = {
