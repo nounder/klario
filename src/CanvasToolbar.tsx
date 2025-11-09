@@ -14,6 +14,7 @@ function ToolSelector(props: {
 }) {
   const tools: Array<{ type: ToolType; label: string }> = [
     { type: "StrokeTool", label: "Stroke" },
+    { type: "EraserTool", label: "Eraser" },
     { type: "ImageTool", label: "Image" },
     { type: "TextTool", label: "Text" },
   ]

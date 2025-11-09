@@ -108,6 +108,7 @@ export default function Canvas(props: CanvasProps) {
         addNode: (node: Node) => {
           setStore("nodes", (nodes) => [...nodes, node])
         },
+        nodes: store.nodes,
       } as any)
     }
   }
@@ -130,7 +131,11 @@ export default function Canvas(props: CanvasProps) {
         point,
         state: store.currentToolInstance.state,
         setState: store.currentToolInstance.setState,
-      })
+        setAppStore: (updates: any) => {
+          setStore(updates)
+        },
+        nodes: store.nodes,
+      } as any)
     }
   }
 
@@ -177,9 +182,14 @@ export default function Canvas(props: CanvasProps) {
           addNode: (node: Node) => {
             setStore("nodes", (nodes) => [...nodes, node])
           },
+          deleteNodes: (nodeIds: string[]) => {
+            setStore("nodes", (nodes) => 
+              nodes.filter(node => !nodeIds.includes(node.id))
+            )
+          },
           calculateBounds,
           simplifyStroke,
-        })
+        } as any)
       } else {
         setStore("isDrawing", false)
         setStore("activePointerId", null)
@@ -469,36 +479,67 @@ export default function Canvas(props: CanvasProps) {
         {/* Render current path being drawn */}
         {(() => {
           if (
-            store.currentTool !== "StrokeTool"
-            || !store.currentToolInstance
-            || !store.currentToolInstance.state
-            || !store.currentToolInstance.state.currentPath
+            store.currentTool === "StrokeTool"
+            && store.currentToolInstance
+            && store.currentToolInstance.state
+            && store.currentToolInstance.state.currentPath
+            && store.currentToolInstance.state.currentPath.length > 0
           ) {
-            return null
+            const toolState = store.currentToolInstance.state
+
+            const node = {
+              id: "temp",
+              type: "StrokeNode" as const,
+              parent: null,
+              bounds: { x: 0, y: 0, width: 0, height: 0 },
+              locked: false,
+              stroke: {
+                type: toolState.strokeType,
+                points: toolState.currentPath,
+                width: toolState.width,
+                color: toolState.color,
+              },
+            }
+
+            return (
+              <g style={{ "will-change": "transform" }}>
+                {Nodes.StrokeNode.render(node)}
+              </g>
+            )
           }
 
-          const toolState = store.currentToolInstance.state
-          if (toolState.currentPath.length === 0) return null
+          // Render eraser path
+          if (
+            store.currentTool === "EraserTool"
+            && store.currentToolInstance
+            && store.currentToolInstance.state
+            && store.currentToolInstance.state.currentPath
+            && store.currentToolInstance.state.currentPath.length > 0
+          ) {
+            const toolState = store.currentToolInstance.state
+            const points = toolState.currentPath
 
-          const node = {
-            id: "temp",
-            type: "StrokeNode" as const,
-            parent: null,
-            bounds: { x: 0, y: 0, width: 0, height: 0 },
-            locked: false,
-            stroke: {
-              type: toolState.strokeType,
-              points: toolState.currentPath,
-              width: toolState.width,
-              color: toolState.color,
-            },
+            // Create a path string for the eraser
+            const pathData = points.map((p: StrokePoint, i: number) => 
+              `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`
+            ).join(' ')
+
+            return (
+              <g style={{ "will-change": "transform" }}>
+                <path
+                  d={pathData}
+                  stroke="rgba(255, 0, 0, 0.3)"
+                  stroke-width={toolState.width}
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  fill="none"
+                  opacity={0.5}
+                />
+              </g>
+            )
           }
 
-          return (
-            <g style={{ "will-change": "transform" }}>
-              {Nodes.StrokeNode.render(node)}
-            </g>
-          )
+          return null
         })()}
       </svg>
     </div>

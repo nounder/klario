@@ -114,6 +114,12 @@ export interface GroupToolState {
   selectedNodes: Node[]
 }
 
+export interface EraserToolState {
+  width: number
+  currentPath: StrokePoint[]
+  intersectedNodeIds: Set<string>
+}
+
 export interface StrokeTool {
   type: "StrokeTool"
   state: StrokeToolState
@@ -134,17 +140,24 @@ export interface GroupTool {
   state: GroupToolState
 }
 
+export interface EraserTool {
+  type: "EraserTool"
+  state: EraserToolState
+}
+
 export type Tool =
   | StrokeTool
   | ImageTool
   | TextTool
   | GroupTool
+  | EraserTool
 
 export type ToolType =
   | "StrokeTool"
   | "ImageTool"
   | "TextTool"
   | "GroupTool"
+  | "EraserTool"
 
 // Application state
 export interface AppState {
