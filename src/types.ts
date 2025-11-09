@@ -79,17 +79,25 @@ export interface TextNode extends NodeBase {
   color: string
 }
 
+export interface DrawEraserNode extends NodeBase {
+  type: "DrawEraserNode"
+  points: StrokePoint[]
+  width: number
+}
+
 export type Node =
   | StrokeNode
   | ImageNode
   | GroupNode
   | TextNode
+  | DrawEraserNode
 
 export type NodeType =
   | "StrokeNode"
   | "ImageNode"
   | "GroupNode"
   | "TextNode"
+  | "DrawEraserNode"
 
 // Tool types
 export interface StrokeToolState {
@@ -114,10 +122,15 @@ export interface GroupToolState {
   selectedNodes: Node[]
 }
 
-export interface EraserToolState {
+export interface NodeEraserToolState {
   width: number
   currentPath: StrokePoint[]
   intersectedNodeIds: Set<string>
+}
+
+export interface DrawEraserToolState {
+  width: number
+  currentPath: StrokePoint[]
 }
 
 export interface StrokeTool {
@@ -140,9 +153,14 @@ export interface GroupTool {
   state: GroupToolState
 }
 
-export interface EraserTool {
-  type: "EraserTool"
-  state: EraserToolState
+export interface NodeEraserTool {
+  type: "NodeEraserTool"
+  state: NodeEraserToolState
+}
+
+export interface DrawEraserTool {
+  type: "DrawEraserTool"
+  state: DrawEraserToolState
 }
 
 export type Tool =
@@ -150,14 +168,16 @@ export type Tool =
   | ImageTool
   | TextTool
   | GroupTool
-  | EraserTool
+  | NodeEraserTool
+  | DrawEraserTool
 
 export type ToolType =
   | "StrokeTool"
   | "ImageTool"
   | "TextTool"
   | "GroupTool"
-  | "EraserTool"
+  | "NodeEraserTool"
+  | "DrawEraserTool"
 
 // Application state
 export interface AppState {

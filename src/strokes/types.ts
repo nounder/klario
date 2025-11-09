@@ -9,4 +9,3 @@ export type StrokeModule = {
   path: (points: StrokePoint[], options: { width: number }) => string
   render: (points: StrokePoint[], options: StrokeOptions) => JSX.Element
 }
-

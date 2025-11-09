@@ -14,7 +14,8 @@ function ToolSelector(props: {
 }) {
   const tools: Array<{ type: ToolType; label: string }> = [
     { type: "StrokeTool", label: "Stroke" },
-    { type: "EraserTool", label: "Eraser" },
+    { type: "DrawEraserTool", label: "Draw Eraser" },
+    { type: "NodeEraserTool", label: "Node Eraser" },
     { type: "ImageTool", label: "Image" },
     { type: "TextTool", label: "Text" },
   ]
@@ -111,6 +112,7 @@ export default function CanvasToolbar(props: CanvasToolbarProps) {
         "TextNode": "TextTool",
         "ImageNode": "ImageTool",
         "GroupNode": "GroupTool",
+        "DrawEraserNode": "DrawEraserTool",
       }
 
       const matchingTool = nodeToolMap[activeNode.type]

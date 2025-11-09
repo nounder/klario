@@ -214,7 +214,31 @@ export function renderSettings(props: {
       </>
     ),
     renderNode: () => {
-      // This is handled by Canvas component during drawing
+      return null
+    },
+    renderCanvas: () => {
+      // Render temporary stroke preview while drawing
+      if (state.currentPath.length > 0) {
+        const node = {
+          id: "temp",
+          type: "StrokeNode" as const,
+          parent: null,
+          bounds: { x: 0, y: 0, width: 0, height: 0 },
+          locked: false,
+          stroke: {
+            type: state.strokeType,
+            points: state.currentPath,
+            width: state.width,
+            color: state.color,
+          },
+        }
+
+        return (
+          <g style={{ "will-change": "transform" }}>
+            {StrokeNode.render(node)}
+          </g>
+        )
+      }
       return null
     },
   }

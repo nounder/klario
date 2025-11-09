@@ -183,8 +183,9 @@ export default function Canvas(props: CanvasProps) {
             setStore("nodes", (nodes) => [...nodes, node])
           },
           deleteNodes: (nodeIds: string[]) => {
-            setStore("nodes", (nodes) => 
-              nodes.filter(node => !nodeIds.includes(node.id))
+            setStore(
+              "nodes",
+              (nodes) => nodes.filter(node => !nodeIds.includes(node.id)),
             )
           },
           calculateBounds,
@@ -476,71 +477,8 @@ export default function Canvas(props: CanvasProps) {
           }}
         </For>
 
-        {/* Render current path being drawn */}
-        {(() => {
-          if (
-            store.currentTool === "StrokeTool"
-            && store.currentToolInstance
-            && store.currentToolInstance.state
-            && store.currentToolInstance.state.currentPath
-            && store.currentToolInstance.state.currentPath.length > 0
-          ) {
-            const toolState = store.currentToolInstance.state
-
-            const node = {
-              id: "temp",
-              type: "StrokeNode" as const,
-              parent: null,
-              bounds: { x: 0, y: 0, width: 0, height: 0 },
-              locked: false,
-              stroke: {
-                type: toolState.strokeType,
-                points: toolState.currentPath,
-                width: toolState.width,
-                color: toolState.color,
-              },
-            }
-
-            return (
-              <g style={{ "will-change": "transform" }}>
-                {Nodes.StrokeNode.render(node)}
-              </g>
-            )
-          }
-
-          // Render eraser path
-          if (
-            store.currentTool === "EraserTool"
-            && store.currentToolInstance
-            && store.currentToolInstance.state
-            && store.currentToolInstance.state.currentPath
-            && store.currentToolInstance.state.currentPath.length > 0
-          ) {
-            const toolState = store.currentToolInstance.state
-            const points = toolState.currentPath
-
-            // Create a path string for the eraser
-            const pathData = points.map((p: StrokePoint, i: number) => 
-              `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`
-            ).join(' ')
-
-            return (
-              <g style={{ "will-change": "transform" }}>
-                <path
-                  d={pathData}
-                  stroke="rgba(255, 0, 0, 0.3)"
-                  stroke-width={toolState.width}
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  fill="none"
-                  opacity={0.5}
-                />
-              </g>
-            )
-          }
-
-          return null
-        })()}
+        {/* Render tool-specific canvas overlays (optional renderCanvas method) */}
+        {store.currentToolInstance?.renderCanvas?.()}
       </svg>
     </div>
   )

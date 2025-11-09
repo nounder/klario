@@ -57,4 +57,3 @@ function randomBytes(length: number): Uint8Array {
   crypto.getRandomValues(buf)
   return buf
 }
-
