@@ -174,9 +174,29 @@ export default function Canvas(props: {
     const clientX = e.clientX
     const clientY = e.clientY
 
+    // Calculate the actual viewport within the SVG element
+    // accounting for preserveAspectRatio (default: xMidYMid meet)
+    const viewBoxAspect = canvasState.viewBox.width / canvasState.viewBox.height
+    const elementAspect = rect.width / rect.height
+
+    let actualWidth = rect.width
+    let actualHeight = rect.height
+    let offsetX = 0
+    let offsetY = 0
+
+    if (elementAspect > viewBoxAspect) {
+      // Element is wider - letterboxed on sides
+      actualWidth = rect.height * viewBoxAspect
+      offsetX = (rect.width - actualWidth) / 2
+    } else if (elementAspect < viewBoxAspect) {
+      // Element is taller - letterboxed on top/bottom
+      actualHeight = rect.width / viewBoxAspect
+      offsetY = (rect.height - actualHeight) / 2
+    }
+
     // Convert screen coordinates to SVG viewBox coordinates
-    const relativeX = (clientX - rect.left) / rect.width
-    const relativeY = (clientY - rect.top) / rect.height
+    const relativeX = (clientX - rect.left - offsetX) / actualWidth
+    const relativeY = (clientY - rect.top - offsetY) / actualHeight
 
     const point: StrokePoint = {
       x: canvasState.viewBox.x + relativeX * canvasState.viewBox.width,
@@ -570,6 +590,7 @@ export default function Canvas(props: {
         width="100%"
         height="100%"
         viewBox={`${canvasState.viewBox.x} ${canvasState.viewBox.y} ${canvasState.viewBox.width} ${canvasState.viewBox.height}`}
+        preserveAspectRatio="xMidYMid meet"
         classList={{
           panning: canvasState.isPanning && canvasState.panStart !== null,
           drawing: !canvasState.isPanning,
