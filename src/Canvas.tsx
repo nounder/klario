@@ -1,29 +1,135 @@
-import { createEffect, createMemo, For, onMount } from "solid-js"
-import type { SetStoreFunction } from "solid-js/store"
+import { createEffect, createMemo, createSignal, For, onMount } from "solid-js"
+import { createStore } from "solid-js/store"
 import * as Nodes from "./nodes/index.ts"
 import type { Node } from "./nodes/index.ts"
 import { simplifyStroke } from "./strokes/simplification.ts"
-import * as Tools from "./tools/index.ts"
-import type { AppState, Bounds, StrokePoint } from "./types"
+import type { ToolModule } from "./tools/index.ts"
+import type { Bounds, CanvasState, StrokePoint } from "./types"
 
 type Point = { x: number; y: number }
 
 export default function Canvas(props: {
-  store: AppState
-  setStore: SetStoreFunction<AppState>
+  nodes?: Node[]
+  tool: ToolModule
   bounds?:
     | { width: number; height: number }
     | { x: number; y: number; width: number; height: number }
+  rootStyle?: Record<string, string>
 }) {
-  const store = props.store
-  const setStore = props.setStore
+  // Canvas-specific local state
+  const [canvasState, setCanvasState] = createStore<CanvasState>({
+    viewBox: { x: 0, y: 0, width: 100, height: 100 },
+    isDrawing: false,
+    activePointerId: null,
+    isPanning: false,
+    panStart: null,
+    pointerPosition: null,
+  })
+
+  // Internal nodes state - managed by Canvas
+  // Initialize with props.nodes if provided, otherwise empty
+  const [nodes, setNodes] = createSignal<Node[]>(props.nodes ?? [])
+  
+  // Canvas bounds as a signal for performance - updated incrementally
+  const [internalCanvasBounds, setInternalCanvasBounds] = createSignal<Bounds | null>(null)
+
+  // Internal state
+  const [activeNodeId, setActiveNodeId] = createSignal<string | null>(null)
+  
+  // Create tool instance internally - recreate when tool changes
+  const toolInstance = createMemo(() => props.tool.build())
 
   let svgRef: SVGSVGElement | undefined
-
+  
+  // Calculate initial bounds on mount
+  onMount(() => {
+    recalculateCanvasBounds()
+  })
+  
+  // Helper: Calculate bounds from points with padding
+  const calculateBoundsFromPoints = (points: StrokePoint[], padding: number = 50): Bounds => {
+    const xs = points.map((p: StrokePoint) => p.x)
+    const ys = points.map((p: StrokePoint) => p.y)
+    
+    const minX = Math.min(...xs) - padding
+    const minY = Math.min(...ys) - padding
+    const maxX = Math.max(...xs) + padding
+    const maxY = Math.max(...ys) + padding
+    
+    return {
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY,
+    }
+  }
+  
+  // Helper: Merge two bounds (expand first to include second)
+  const mergeBounds = (bounds1: Bounds | null, bounds2: Bounds): Bounds => {
+    if (!bounds1) return bounds2
+    
+    const newMinX = Math.min(bounds1.x, bounds2.x)
+    const newMinY = Math.min(bounds1.y, bounds2.y)
+    const newMaxX = Math.max(bounds1.x + bounds1.width, bounds2.x + bounds2.width)
+    const newMaxY = Math.max(bounds1.y + bounds1.height, bounds2.y + bounds2.height)
+    
+    return {
+      x: newMinX,
+      y: newMinY,
+      width: newMaxX - newMinX,
+      height: newMaxY - newMinY,
+    }
+  }
+  
+  // Recalculate canvas bounds from all nodes (used on delete or initial load)
+  const recalculateCanvasBounds = () => {
+    const allPoints: StrokePoint[] = []
+    
+    nodes().forEach((node) => {
+      if (node.type === "StrokeNode") {
+        allPoints.push(...node.stroke.points)
+      }
+    })
+    
+    if (allPoints.length === 0) {
+      setInternalCanvasBounds(null)
+      return
+    }
+    
+    const padding = 50
+    const xs = allPoints.map(p => p.x)
+    const ys = allPoints.map(p => p.y)
+    
+    const minX = Math.min(...xs) - padding
+    const minY = Math.min(...ys) - padding
+    const maxX = Math.max(...xs) + padding
+    const maxY = Math.max(...ys) + padding
+    
+    setInternalCanvasBounds({
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY,
+    })
+  }
+  
+  // Update canvas bounds incrementally when adding a node (performance optimization)
+  const updateCanvasBoundsForNode = (node: Node) => {
+    if (node.type !== "StrokeNode") return
+    
+    const points = node.stroke.points
+    if (points.length === 0) return
+    
+    const nodeBounds = calculateBoundsFromPoints(points, 50)
+    const currentBounds = internalCanvasBounds()
+    const newBounds = mergeBounds(currentBounds, nodeBounds)
+    
+    setInternalCanvasBounds(newBounds)
+  }
   // Update viewBox when bounds prop changes or svgRef is set
   createEffect(() => {
     if (props.bounds) {
-      setStore("viewBox", {
+      setCanvasState("viewBox", {
         x: "x" in props.bounds ? props.bounds.x : 0,
         y: "y" in props.bounds ? props.bounds.y : 0,
         width: props.bounds.width,
@@ -32,7 +138,7 @@ export default function Canvas(props: {
     } else if (svgRef) {
       const rect = svgRef.getBoundingClientRect()
       if (rect.width > 0 && rect.height > 0) {
-        setStore("viewBox", {
+        setCanvasState("viewBox", {
           x: 0,
           y: 0,
           width: rect.width,
@@ -73,8 +179,8 @@ export default function Canvas(props: {
     const relativeY = (clientY - rect.top) / rect.height
 
     const point: StrokePoint = {
-      x: store.viewBox.x + relativeX * store.viewBox.width,
-      y: store.viewBox.y + relativeY * store.viewBox.height,
+      x: canvasState.viewBox.x + relativeX * canvasState.viewBox.width,
+      y: canvasState.viewBox.y + relativeY * canvasState.viewBox.height,
     }
 
     // Add pressure if available
@@ -110,99 +216,104 @@ export default function Canvas(props: {
 
   const startDrawing = (e: PointerEvent) => {
     if (
-      store.isDrawing
-      && store.activePointerId !== null
-      && store.activePointerId !== e.pointerId
+      canvasState.isDrawing
+      && canvasState.activePointerId !== null
+      && canvasState.activePointerId !== e.pointerId
     ) {
       return
     }
 
     handlePointerDown(e)
 
-    if (store.isPanning) {
+    if (canvasState.isPanning) {
       startPanning(e)
       return
     }
 
-    if (!store.currentToolInstance) return
+    const instance = toolInstance()
+    if (!instance) return
 
     const point = getCoordinates(e)
-    const tool = Tools[store.currentTool]
+    const tool = props.tool
 
     // Call the tool's onPointerDown handler with appropriate helpers
     if (tool && "onPointerDown" in tool) {
-      tool?.onPointerDown({
+      (tool as any).onPointerDown({
         point,
-        state: store.currentToolInstance.state,
-        setState: store.currentToolInstance.setState,
-        setAppStore: (updates: any) => {
-          setStore({
-            ...updates,
+        state: (instance as any).state,
+        setState: (instance as any).setState,
+        setAppStore: (_updates: any) => {
+          setCanvasState({
+            isDrawing: true,
             activePointerId: e.pointerId,
           })
         },
         addNode: (node: Node) => {
-          setStore("nodes", (nodes) => [...nodes, node])
+          setNodes(prev => [...prev, node])
+          updateCanvasBoundsForNode(node)
         },
-        nodes: store.nodes,
+        nodes: nodes(),
       })
     }
   }
 
   const draw = (e: PointerEvent) => {
-    if (store.isPanning) {
+    if (canvasState.isPanning) {
       pan(e)
       return
     }
 
-    // Update pointer position in app state
-    if (!store.isPanning) {
+    // Update pointer position in canvas state
+    if (!canvasState.isPanning) {
       const point = getCoordinates(e)
-      setStore("pointerPosition", { x: point.x, y: point.y })
+      setCanvasState("pointerPosition", { x: point.x, y: point.y })
     }
 
-    if (!store.isDrawing || store.activePointerId !== e.pointerId) return
-    if (!store.currentToolInstance) return
+    if (!canvasState.isDrawing || canvasState.activePointerId !== e.pointerId) return
+    const instance = toolInstance()
+    if (!instance) return
 
     e.preventDefault()
     const point = getCoordinates(e)
-    const tool = Tools[store.currentTool]
+    const tool = props.tool
 
     // Call the tool's onPointerMove handler if it exists
     if (tool && "onPointerMove" in tool) {
-      tool.onPointerMove({
+      (tool as any).onPointerMove({
         point,
-        state: store.currentToolInstance.state,
-        setState: store.currentToolInstance.setState,
-        setAppStore: (updates: any) => {
-          setStore(updates)
+        state: (instance as any).state,
+        setState: (instance as any).setState,
+        setAppStore: (_updates: any) => {
+          // Canvas state updates would go here if needed
         },
-        nodes: store.nodes,
-      } as any)
+        nodes: nodes(),
+      })
     }
   }
 
-  const handlePointerEnter = (e: PointerEvent) => {
-    if (!store.currentToolInstance) return
+  const handlePointerEnter = (_e: PointerEvent) => {
+    const instance = toolInstance()
+    if (!instance) return
 
-    const tool = Tools[store.currentTool] // Call the tool's onPointerEnter handler if it exists
+    const tool = props.tool
     ;(tool as any)?.onPointerEnter?.({
-      setAppStore: (updates: any) => {
-        setStore(updates)
+      setAppStore: (_updates: any) => {
+        // Canvas state updates would go here if needed
       },
     })
   }
 
   const handlePointerLeave = (e: PointerEvent) => {
     // Clear pointer position when leaving canvas
-    setStore("pointerPosition", null)
+    setCanvasState("pointerPosition", null)
 
     // Call the tool's onPointerLeave handler if it exists
-    if (store.currentToolInstance) {
-      const tool = Tools[store.currentTool]
+    const instance = toolInstance()
+    if (instance) {
+      const tool = props.tool
       ;(tool as any)?.onPointerLeave?.({
-        setAppStore: (updates: any) => {
-          setStore(updates)
+        setAppStore: (_updates: any) => {
+          // Canvas state updates would go here if needed
         },
       })
     }
@@ -211,64 +322,55 @@ export default function Canvas(props: {
   }
 
   const stopDrawing = (e?: PointerEvent) => {
-    if (store.isPanning && store.panStart) {
+    if (canvasState.isPanning && canvasState.panStart) {
       stopPanning()
       return
     }
 
     if (
       e
-      && store.activePointerId !== null
-      && store.activePointerId !== e.pointerId
+      && canvasState.activePointerId !== null
+      && canvasState.activePointerId !== e.pointerId
     ) {
       return
     }
 
-    if (store.isDrawing && store.currentToolInstance) {
-      const tool = Tools[store.currentTool]
+    const instance = toolInstance()
+    if (canvasState.isDrawing && instance) {
+      const tool = props.tool
 
       // Call the tool's onPointerUp handler if it exists
       if (tool && "onPointerUp" in tool) {
         const point = e ? getCoordinates(e) : { x: 0, y: 0 }
-        tool.onPointerUp({
+        ;(tool as any).onPointerUp({
           point,
-          state: store.currentToolInstance.state,
-          setState: store.currentToolInstance.setState,
-          setAppStore: (updates: any) => {
-            if (typeof updates === "function") {
-              // Handle function updates
-              const newState = updates(store)
-              setStore({
-                ...newState,
-                activePointerId: null,
-              })
-            } else {
-              // Handle object updates
-              setStore({
-                ...updates,
-                activePointerId: null,
-              })
-            }
+          state: (instance as any).state,
+          setState: (instance as any).setState,
+          setAppStore: (_updates: any) => {
+            setCanvasState({
+              isDrawing: false,
+              activePointerId: null,
+            })
           },
           addNode: (node: Node) => {
-            setStore("nodes", (nodes) => [...nodes, node])
+            setNodes(prev => [...prev, node])
+            updateCanvasBoundsForNode(node)
           },
           deleteNodes: (nodeIds: string[]) => {
-            setStore(
-              "nodes",
-              (nodes) => nodes.filter(node => !nodeIds.includes(node.id)),
-            )
+            setNodes(prev => prev.filter(node => !nodeIds.includes(node.id)))
+            // Recalculate bounds after deletion
+            recalculateCanvasBounds()
           },
           calculateBounds,
           simplifyStroke,
         })
       } else {
-        setStore("isDrawing", false)
-        setStore("activePointerId", null)
+        setCanvasState("isDrawing", false)
+        setCanvasState("activePointerId", null)
       }
     } else {
-      setStore("isDrawing", false)
-      setStore("activePointerId", null)
+      setCanvasState("isDrawing", false)
+      setCanvasState("activePointerId", null)
     }
 
     if (e) {
@@ -277,23 +379,24 @@ export default function Canvas(props: {
   }
 
   const cancelDrawing = (e: PointerEvent) => {
-    if (store.activePointerId === e.pointerId && store.currentToolInstance) {
-      const tool = Tools[store.currentTool]
+    const instance = toolInstance()
+    if (canvasState.activePointerId === e.pointerId && instance) {
+      const tool = props.tool
 
       // Call the tool's onPointerCancel handler if it exists
       if (tool && "onPointerCancel" in tool) {
-        tool.onPointerCancel({
-          setState: store.currentToolInstance.setState,
-          setAppStore: (updates: any) => {
-            setStore({
-              ...updates,
+        (tool as any).onPointerCancel({
+          setState: (instance as any).setState,
+          setAppStore: (_updates: any) => {
+            setCanvasState({
+              isDrawing: false,
               activePointerId: null,
             })
           },
         })
       } else {
-        setStore("isDrawing", false)
-        setStore("activePointerId", null)
+        setCanvasState("isDrawing", false)
+        setCanvasState("activePointerId", null)
       }
 
       releasePointer(e)
@@ -329,50 +432,29 @@ export default function Canvas(props: {
 
   // Handle node changes
   const handleNodeChange = (updatedNode: Node): Node => {
-    const nodeIndex = store.nodes.findIndex((n) => n.id === updatedNode.id)
+    const nodeIndex = nodes().findIndex((n) => n.id === updatedNode.id)
     if (nodeIndex !== -1) {
-      setStore("nodes", nodeIndex, updatedNode)
+      setNodes(prev => {
+        const newNodes = [...prev]
+        newNodes[nodeIndex] = updatedNode
+        return newNodes
+      })
     }
     return updatedNode
   }
 
-  // Calculate the bounding box of all nodes
+  // Get canvas bounds including current tool path (for panning calculations)
   const canvasBounds = createMemo((): Bounds | null => {
-    const allPoints: StrokePoint[] = []
-
-    store.nodes.forEach((node) => {
-      if (node.type === "StrokeNode") {
-        allPoints.push(...node.stroke.points)
-      }
-    })
-
-    if (
-      store.currentTool === "StrokeTool"
-      && store.currentToolInstance
-      && store.currentToolInstance.state
-      && store.currentToolInstance.state.currentPath
-      && store.currentToolInstance.state.currentPath.length > 0
-    ) {
-      allPoints.push(...store.currentToolInstance.state.currentPath)
+    const bounds = internalCanvasBounds()
+    
+    // Include current drawing path in bounds calculation
+    const instance = toolInstance() as any
+    if (instance?.state?.currentPath?.length > 0) {
+      const pathBounds = calculateBoundsFromPoints(instance.state.currentPath, 50)
+      return mergeBounds(bounds, pathBounds)
     }
-
-    if (allPoints.length === 0) return null
-
-    const padding = 50
-    const xs = allPoints.map(p => p.x)
-    const ys = allPoints.map(p => p.y)
-
-    const minX = Math.min(...xs) - padding
-    const minY = Math.min(...ys) - padding
-    const maxX = Math.max(...xs) + padding
-    const maxY = Math.max(...ys) + padding
-
-    return {
-      x: minX,
-      y: minY,
-      width: maxX - minX,
-      height: maxY - minY,
-    }
+    
+    return bounds
   })
 
   // Check if panning should be enabled
@@ -381,7 +463,7 @@ export default function Canvas(props: {
     if (!bounds) return false
 
     return (
-      bounds.width > store.viewBox.width || bounds.height > store.viewBox.height
+      bounds.width > canvasState.viewBox.width || bounds.height > canvasState.viewBox.height
     )
   })
 
@@ -392,7 +474,7 @@ export default function Canvas(props: {
     if (props.bounds) return
 
     const rect = svgRef.getBoundingClientRect()
-    setStore("viewBox", (vb) => ({
+    setCanvasState("viewBox", (vb) => ({
       ...vb,
       width: rect.width,
       height: rect.height,
@@ -404,22 +486,22 @@ export default function Canvas(props: {
     if (!canPan()) return
     e.preventDefault()
     const point = getScreenCoordinates(e)
-    setStore("panStart", point)
+    setCanvasState("panStart", point)
   }
 
   const pan = (e: PointerEvent) => {
-    if (!store.isPanning || !store.panStart || !svgRef) return
+    if (!canvasState.isPanning || !canvasState.panStart || !svgRef) return
     e.preventDefault()
 
     const point = getScreenCoordinates(e)
     const rect = svgRef.getBoundingClientRect()
 
-    const screenDx = point.x - store.panStart.x
-    const screenDy = point.y - store.panStart.y
-    const viewBoxDx = (screenDx / rect.width) * store.viewBox.width
-    const viewBoxDy = (screenDy / rect.height) * store.viewBox.height
+    const screenDx = point.x - canvasState.panStart.x
+    const screenDy = point.y - canvasState.panStart.y
+    const viewBoxDx = (screenDx / rect.width) * canvasState.viewBox.width
+    const viewBoxDy = (screenDy / rect.height) * canvasState.viewBox.height
 
-    setStore("viewBox", (vb) => {
+    setCanvasState("viewBox", (vb) => {
       const bounds = canvasBounds()
 
       let newX = vb.x - viewBoxDx
@@ -452,26 +534,26 @@ export default function Canvas(props: {
       }
     })
 
-    setStore("panStart", point)
+    setCanvasState("panStart", point)
   }
 
   const stopPanning = () => {
-    setStore("panStart", null)
+    setCanvasState("panStart", null)
   }
 
   // Handle keyboard events
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.code === "Space" && !store.isPanning) {
+    if (e.code === "Space" && !canvasState.isPanning) {
       e.preventDefault()
-      setStore("isPanning", true)
+      setCanvasState("isPanning", true)
     }
   }
 
   const handleKeyUp = (e: KeyboardEvent) => {
     if (e.code === "Space") {
       e.preventDefault()
-      setStore("isPanning", false)
-      setStore("panStart", null)
+      setCanvasState("isPanning", false)
+      setCanvasState("panStart", null)
     }
   }
 
@@ -487,16 +569,16 @@ export default function Canvas(props: {
         ref={svgRef}
         width="100%"
         height="100%"
-        viewBox={`${store.viewBox.x} ${store.viewBox.y} ${store.viewBox.width} ${store.viewBox.height}`}
+        viewBox={`${canvasState.viewBox.x} ${canvasState.viewBox.y} ${canvasState.viewBox.width} ${canvasState.viewBox.height}`}
         classList={{
-          panning: store.isPanning && store.panStart !== null,
-          drawing: !store.isPanning,
+          panning: canvasState.isPanning && canvasState.panStart !== null,
+          drawing: !canvasState.isPanning,
         }}
         style={{
-          cursor: store.isPanning && store.panStart === null
+          cursor: canvasState.isPanning && canvasState.panStart === null
             ? "grab"
             : undefined,
-          ...store.rootStyle,
+          ...props.rootStyle,
         }}
         onPointerEnter={(e) => handlePointerEnter(e)}
         onPointerDown={(e) => startDrawing(e)}
@@ -507,7 +589,7 @@ export default function Canvas(props: {
         onClick={(e) => {
           // Deselect when clicking canvas background
           if (e.target === e.currentTarget) {
-            setStore("activeNodeId", null)
+            setActiveNodeId(null)
           }
         }}
         onContextMenu={(e) => e.preventDefault()}
@@ -515,10 +597,10 @@ export default function Canvas(props: {
         onDragStart={(e) => e.preventDefault()}
       >
         {/* Render completed nodes */}
-        <For each={store.nodes}>
+        <For each={nodes()}>
           {(node) => {
             const ctx = {
-              activeNodeId: store.activeNodeId,
+              activeNodeId: activeNodeId(),
               onChange: handleNodeChange,
             }
             const renderer = Nodes[node.type]
@@ -527,8 +609,8 @@ export default function Canvas(props: {
         </For>
 
         {/* Render tool-specific canvas overlays (optional renderCanvas method) */}
-        {store.currentToolInstance?.renderCanvas?.({
-          pointerPosition: store.pointerPosition,
+        {(toolInstance() as any)?.renderCanvas?.({
+          pointerPosition: canvasState.pointerPosition,
         })}
       </svg>
     </div>

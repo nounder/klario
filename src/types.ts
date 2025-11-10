@@ -60,17 +60,21 @@ export type StrokeType =
   | "PenStroke"
   | "MarkerStroke"
 
-// Application state
+// Application state (shared across components)
 export interface AppState {
   nodes: Node[]
   currentTool: ToolType
   currentToolInstance: any | null
+  activeNodeId: string | null
+  rootStyle: Record<string, string>
+}
+
+// Canvas-specific state (local to Canvas component)
+export interface CanvasState {
+  viewBox: ViewBox
   isDrawing: boolean
   activePointerId: number | null
-  viewBox: ViewBox
   isPanning: boolean
   panStart: { x: number; y: number } | null
-  activeNodeId: string | null
   pointerPosition: Point | null
-  rootStyle: Record<string, string>
 }
