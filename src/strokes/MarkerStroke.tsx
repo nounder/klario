@@ -25,6 +25,18 @@ export function render(
 ) {
   const pathData = path(points, options)
 
+  // For single point (circle), use fill instead of stroke to avoid doubling width
+  if (points.length === 1) {
+    return (
+      <path
+        d={pathData}
+        fill={options.color}
+        fill-opacity={0.7}
+        shape-rendering="geometricPrecision"
+      />
+    )
+  }
+
   return (
     <path
       d={pathData}
