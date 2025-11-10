@@ -1,7 +1,7 @@
 import { For } from "solid-js"
+import * as Unique from "../Unique.ts"
 import type { GroupNode, Node as NodeType } from "./index.ts"
 import * as Nodes from "./index.ts"
-import * as Unique from "../Unique.ts"
 
 export const Type = "GroupNode"
 

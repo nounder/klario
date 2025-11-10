@@ -1,108 +1,25 @@
 import { For } from "solid-js"
 import { createStore } from "solid-js/store"
-import type { SetStoreFunction } from "solid-js/store"
-import type { AppState, ToolCanvasProps } from "../types"
 
-import * as StrokeNode from "../nodes/StrokeNode"
-import type { StrokeType } from "../strokes/index.ts"
-import type { StrokePoint } from "../types"
 import type { Node } from "../nodes/index.ts"
-import * as Unique from "../Unique"
-
-export interface State {
-  strokeType: StrokeType
-  color: string
-  width: number
-  currentPath: StrokePoint[]
-}
-
-export interface StrokeTool {
-  type: "StrokeTool"
-  state: State
-}
+import * as StrokeNode from "../nodes/StrokeNode.tsx"
+import { simplifyStroke } from "../simplification.ts"
+import type { StrokeType } from "../strokes/index.ts"
+import type { StrokePoint } from "../types.ts"
+import * as Unique from "../Unique.ts"
+import { calculateBoundsFromPoints } from "../utils.ts"
+import * as Tool from "./Tool.ts"
 
 export const NodeType = StrokeNode.Type
 
-export const initialState: State = {
-  strokeType: "MarkerStroke",
-  color: "#000000",
-  width: 6,
-  currentPath: [],
-}
-
-
-
-export function onPointerDown(helpers: {
-  point: StrokePoint
-  setState: (key: string, value: any) => void
-  setAppStore: (updates: any) => void
-}) {
-  helpers.setState("currentPath", [helpers.point])
-  helpers.setAppStore({
-    isDrawing: true,
+export const StrokeTool = Tool.build(() => {
+  const [state, setState] = createStore({
+    strokeType: "MarkerStroke" as StrokeType,
+    color: "#000000",
+    width: 6,
+    currentPath: [] as StrokePoint[],
   })
-}
 
-export function onPointerMove(helpers: {
-  point: StrokePoint
-  state: State
-  setState: (key: string, value: any) => void
-}) {
-  helpers.setState("currentPath", (prev: StrokePoint[]) => [
-    ...prev,
-    helpers.point,
-  ])
-}
-
-export function onPointerUp(helpers: {
-  state: State
-  setState: (key: string, value: any) => void
-  setAppStore: (updates: any) => void
-  calculateBounds: (points: StrokePoint[], width?: number) => any
-  simplifyStroke: (points: StrokePoint[], epsilon: number) => StrokePoint[]
-  addNode: (node: Node) => void
-}) {
-  const { state } = helpers
-
-  if (state.currentPath.length > 0) {
-    // Apply Douglas-Peucker simplification
-    const epsilonMultiplier = state.strokeType === "PenStroke" ? 0.3 : 0.5
-    const epsilon = epsilonMultiplier * Math.max(1, state.width / 10)
-    const simplifiedPoints = helpers.simplifyStroke(state.currentPath, epsilon)
-    const bounds = helpers.calculateBounds(simplifiedPoints, state.width)
-
-    const newNode: Node = {
-      id: Unique.token(16),
-      type: "StrokeNode",
-      parent: null,
-      bounds,
-      locked: false,
-      stroke: {
-        type: state.strokeType,
-        points: simplifiedPoints,
-        color: state.color,
-        width: state.width,
-      },
-    }
-
-    helpers.addNode(newNode)
-    helpers.setState("currentPath", [])
-  }
-
-  helpers.setAppStore({ isDrawing: false })
-}
-
-export function onPointerCancel(helpers: {
-  setState: (key: string, value: any) => void
-  setAppStore: (updates: any) => void
-}) {
-  helpers.setState("currentPath", [])
-  helpers.setAppStore({ isDrawing: false })
-}
-
-export function build() {
-  const [state, setState] = createStore<State>(initialState)
-  
   const colors = [
     "#000000",
     "#FF0000",
@@ -122,8 +39,41 @@ export function build() {
   ]
 
   return {
-    state,
-    setState,
+    onPointerDown: (ctx) => {
+      setState("currentPath", [ctx.point])
+    },
+    onPointerMove: (ctx) => {
+      setState("currentPath", [...state.currentPath, ctx.point])
+    },
+    onPointerUp: (ctx) => {
+      if (state.currentPath.length > 0) {
+        // Apply Douglas-Peucker simplification
+        const epsilonMultiplier = state.strokeType === "PenStroke" ? 0.3 : 0.5
+        const epsilon = epsilonMultiplier * Math.max(1, state.width / 10)
+        const simplifiedPoints = simplifyStroke(state.currentPath, epsilon)
+        const bounds = calculateBoundsFromPoints(simplifiedPoints, state.width)
+
+        const newNode: Node = {
+          id: Unique.token(16),
+          type: "StrokeNode",
+          parent: null,
+          bounds,
+          locked: false,
+          stroke: {
+            type: state.strokeType,
+            points: simplifiedPoints,
+            color: state.color,
+            width: state.width,
+          },
+        }
+
+        ctx.addNode(newNode)
+        setState("currentPath", [])
+      }
+    },
+    onPointerCancel: () => {
+      setState("currentPath", [])
+    },
     renderSettings: () => (
       <>
         {/* Color Picker */}
@@ -226,7 +176,7 @@ export function build() {
         </div>
       </>
     ),
-    renderCanvas: (props: ToolCanvasProps) => {
+    renderCanvas: (_props) => {
       return (
         <g style={{ "will-change": "transform" }}>
           {/* Render temporary stroke preview while drawing */}
@@ -251,4 +201,4 @@ export function build() {
       )
     },
   }
-}
+})

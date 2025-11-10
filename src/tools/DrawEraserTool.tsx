@@ -1,100 +1,52 @@
 import { createStore } from "solid-js/store"
-import type { SetStoreFunction } from "solid-js/store"
-import type { AppState, ToolCanvasProps } from "../types"
 
-import * as DrawEraserNode from "../nodes/DrawEraserNode"
-import type { StrokePoint } from "../types"
+import * as DrawEraserNode from "../nodes/DrawEraserNode.tsx"
 import type { Node } from "../nodes/index.ts"
-import * as Unique from "../Unique"
-
-export interface State {
-  width: number
-  currentPath: StrokePoint[]
-}
-
-export interface DrawEraserTool {
-  type: "DrawEraserTool"
-  state: State
-}
+import { simplifyStroke } from "../simplification.ts"
+import type { StrokePoint } from "../types.ts"
+import * as Unique from "../Unique.ts"
+import { calculateBoundsFromPoints } from "../utils.ts"
+import * as Tool from "./Tool.ts"
 
 export const NodeType = DrawEraserNode.Type
 
-export const initialState: State = {
-  width: 20,
-  currentPath: [],
-}
-
-
-
-export function onPointerDown(helpers: {
-  point: StrokePoint
-  setState: (key: string, value: any) => void
-  setAppStore: (updates: any) => void
-}) {
-  helpers.setState("currentPath", [helpers.point])
-  helpers.setAppStore({
-    isDrawing: true,
+export const DrawEraserTool = Tool.build(() => {
+  const [state, setState] = createStore({
+    width: 20,
+    currentPath: [] as StrokePoint[],
   })
-}
-
-export function onPointerMove(helpers: {
-  point: StrokePoint
-  state: State
-  setState: (key: string, value: any) => void
-}) {
-  helpers.setState("currentPath", (prev: StrokePoint[]) => [
-    ...prev,
-    helpers.point,
-  ])
-}
-
-export function onPointerUp(helpers: {
-  state: State
-  setState: (key: string, value: any) => void
-  setAppStore: (updates: any) => void
-  calculateBounds: (points: StrokePoint[], width?: number) => any
-  simplifyStroke: (points: StrokePoint[], epsilon: number) => StrokePoint[]
-  addNode: (node: Node) => void
-}) {
-  const { state } = helpers
-
-  if (state.currentPath.length > 0) {
-    // Apply Douglas-Peucker simplification (same as marker strokes)
-    const epsilon = 0.5 * Math.max(1, state.width / 10)
-    const simplifiedPoints = helpers.simplifyStroke(state.currentPath, epsilon)
-    const bounds = helpers.calculateBounds(simplifiedPoints, state.width)
-
-    const newNode: Node = {
-      id: Unique.token(16),
-      type: "DrawEraserNode",
-      parent: null,
-      bounds,
-      locked: false,
-      points: simplifiedPoints,
-      width: state.width,
-    }
-
-    helpers.addNode(newNode)
-    helpers.setState("currentPath", [])
-  }
-
-  helpers.setAppStore({ isDrawing: false })
-}
-
-export function onPointerCancel(helpers: {
-  setState: (key: string, value: any) => void
-  setAppStore: (updates: any) => void
-}) {
-  helpers.setState("currentPath", [])
-  helpers.setAppStore({ isDrawing: false })
-}
-
-export function build() {
-  const [state, setState] = createStore<State>(initialState)
 
   return {
-    state,
-    setState,
+    onPointerDown: (ctx) => {
+      setState("currentPath", [ctx.point])
+    },
+    onPointerMove: (ctx) => {
+      setState("currentPath", [...state.currentPath, ctx.point])
+    },
+    onPointerUp: (ctx) => {
+      if (state.currentPath.length > 0) {
+        // Apply Douglas-Peucker simplification (same as marker strokes)
+        const epsilon = 0.5 * Math.max(1, state.width / 10)
+        const simplifiedPoints = simplifyStroke(state.currentPath, epsilon)
+        const bounds = calculateBoundsFromPoints(simplifiedPoints, state.width)
+
+        const newNode: Node = {
+          id: Unique.token(16),
+          type: "DrawEraserNode",
+          parent: null,
+          bounds,
+          locked: false,
+          points: simplifiedPoints,
+          width: state.width,
+        }
+
+        ctx.addNode(newNode)
+        setState("currentPath", [])
+      }
+    },
+    onPointerCancel: () => {
+      setState("currentPath", [])
+    },
     renderSettings: () => (
       <>
         {/* Width Slider */}
@@ -141,7 +93,7 @@ export function build() {
         </div>
       </>
     ),
-    renderCanvas: (props: ToolCanvasProps) => {
+    renderCanvas: (_props) => {
       return (
         <g style={{ "will-change": "transform" }}>
           {/* Render temporary eraser stroke preview while drawing */}
@@ -162,4 +114,4 @@ export function build() {
       )
     },
   }
-}
+})

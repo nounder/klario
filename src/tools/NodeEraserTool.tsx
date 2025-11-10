@@ -1,33 +1,9 @@
 import { createStore } from "solid-js/store"
-import type { SetStoreFunction } from "solid-js/store"
-import type {
-  AppState,
-  Bounds,
-  StrokePoint,
-  ToolCanvasProps,
-} from "../types"
 import type { Node } from "../nodes/index.ts"
-
-export interface State {
-  width: number
-  currentPath: StrokePoint[]
-  intersectedNodeIds: Set<string>
-}
-
-export interface NodeEraserTool {
-  type: "NodeEraserTool"
-  state: State
-}
+import type { Bounds, StrokePoint } from "../types.ts"
+import * as Tool from "./Tool.ts"
 
 export const NodeType = null // Eraser doesn't create nodes
-
-export const initialState: State = {
-  width: 20,
-  currentPath: [],
-  intersectedNodeIds: new Set(),
-}
-
-
 
 // Helper function to check if a point is within a certain distance of a line segment
 function pointToSegmentDistance(
@@ -40,17 +16,14 @@ function pointToSegmentDistance(
   const lengthSquared = dx * dx + dy * dy
 
   if (lengthSquared === 0) {
-    // a and b are the same point
     const distX = p.x - a.x
     const distY = p.y - a.y
     return Math.sqrt(distX * distX + distY * distY)
   }
 
-  // Calculate projection parameter
   let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / lengthSquared
   t = Math.max(0, Math.min(1, t))
 
-  // Find the closest point on the segment
   const closestX = a.x + t * dx
   const closestY = a.y + t * dy
 
@@ -70,19 +43,16 @@ function checkIntersection(
 
   const eraserRadius = eraserWidth / 2
 
-  // For stroke nodes, check if eraser path intersects with stroke points
   if (node.type === "StrokeNode") {
     const strokePoints = node.stroke.points
     const strokeWidth = node.stroke.width
     const strokeRadius = strokeWidth / 2
     const threshold = eraserRadius + strokeRadius
 
-    // Check each point in the eraser path against stroke points/segments
     for (let i = 0; i < eraserPath.length; i++) {
       const eraserPoint = eraserPath[i]
       if (!eraserPoint) continue
 
-      // Check against each stroke point
       for (let j = 0; j < strokePoints.length; j++) {
         const strokePoint = strokePoints[j]
         if (!strokePoint) continue
@@ -95,7 +65,6 @@ function checkIntersection(
           return true
         }
 
-        // Check if eraser point is close to stroke segment
         if (j > 0) {
           const prevStrokePoint = strokePoints[j - 1]
           if (!prevStrokePoint) continue
@@ -113,7 +82,6 @@ function checkIntersection(
       }
     }
 
-    // Also check if any stroke point is close to eraser segments
     if (eraserPath.length > 1) {
       for (let i = 1; i < eraserPath.length; i++) {
         const eraserPoint = eraserPath[i]
@@ -139,12 +107,10 @@ function checkIntersection(
     return false
   }
 
-  // For other node types (Image, Text, Group), check if eraser path intersects with bounds
   for (let i = 0; i < eraserPath.length; i++) {
     const point = eraserPath[i]
     if (!point) continue
 
-    // Check if eraser circle overlaps with node bounds
     if (
       point.x + eraserRadius >= node.bounds.x
       && point.x - eraserRadius <= node.bounds.x + node.bounds.width
@@ -154,25 +120,17 @@ function checkIntersection(
       return true
     }
 
-    // Check if eraser segment intersects bounds edges
     if (i > 0) {
       const prevPoint = eraserPath[i - 1]
       if (!prevPoint) continue
 
-      // Check intersection with all four edges of the bounding box
-      const left = node.bounds.x
-      const right = node.bounds.x + node.bounds.width
-      const top = node.bounds.y
-      const bottom = node.bounds.y + node.bounds.height
-
-      // Helper to check if segment intersects with a rectangle
       if (
         segmentIntersectsRect(
           prevPoint,
           point,
           {
-            x: left,
-            y: top,
+            x: node.bounds.x,
+            y: node.bounds.y,
             width: node.bounds.width,
             height: node.bounds.height,
           },
@@ -186,13 +144,11 @@ function checkIntersection(
   return false
 }
 
-// Check if a line segment intersects with a rectangle
 function segmentIntersectsRect(
   p1: StrokePoint,
   p2: StrokePoint,
   rect: Bounds,
 ): boolean {
-  // Check if either endpoint is inside the rectangle
   if (
     (p1.x >= rect.x
       && p1.x <= rect.x + rect.width
@@ -206,13 +162,11 @@ function segmentIntersectsRect(
     return true
   }
 
-  // Check intersection with each edge
   const left = rect.x
   const right = rect.x + rect.width
   const top = rect.y
   const bottom = rect.y + rect.height
 
-  // Check intersection with left, right, top, bottom edges
   return (
     lineSegmentsIntersect(p1, p2, { x: left, y: top }, { x: left, y: bottom })
     || lineSegmentsIntersect(p1, p2, { x: right, y: top }, {
@@ -227,178 +181,76 @@ function segmentIntersectsRect(
   )
 }
 
-/**
- * Check if two line segments intersect using parametric line intersection.
- *
- * This function determines whether two line segments (p1-p2 and p3-p4) intersect
- * by solving the parametric equations of both lines and checking if the intersection
- * point lies within both segments.
- *
- * Mathematical Background:
- * - Line segment 1: P(λ) = p1 + λ(p2 - p1), where λ ∈ [0, 1]
- * - Line segment 2: Q(γ) = p3 + γ(p4 - p3), where γ ∈ [0, 1]
- * - Segments intersect if there exist λ, γ ∈ [0, 1] such that P(λ) = Q(γ)
- *
- * Algorithm Steps:
- * 1. Calculate the determinant (det) of the direction vectors
- *    - det = (p2.x - p1.x) * (p4.y - p3.y) - (p4.x - p3.x) * (p2.y - p1.y)
- *    - If det = 0, the lines are parallel or collinear (no unique intersection)
- *
- * 2. Solve for λ (parameter for segment 1):
- *    - λ represents where along segment 1 the intersection occurs
- *    - λ = 0 means intersection at p1, λ = 1 means intersection at p2
- *    - λ ∈ (0, 1) means intersection is strictly between p1 and p2
- *
- * 3. Solve for γ (parameter for segment 2):
- *    - γ represents where along segment 2 the intersection occurs
- *    - γ = 0 means intersection at p3, γ = 1 means intersection at p4
- *    - γ ∈ (0, 1) means intersection is strictly between p3 and p4
- *
- * 4. Intersection exists if both λ ∈ [0, 1] AND γ ∈ [0, 1]
- *
- * @param p1 - First endpoint of segment 1
- * @param p2 - Second endpoint of segment 1
- * @param p3 - First endpoint of segment 2
- * @param p4 - Second endpoint of segment 2
- * @returns true if the segments intersect, false otherwise
- *
- * @example
- * // Segments that intersect in the middle
- * lineSegmentsIntersect(
- *   {x: 0, y: 0}, {x: 10, y: 10},  // Diagonal from bottom-left to top-right
- *   {x: 0, y: 10}, {x: 10, y: 0}   // Diagonal from top-left to bottom-right
- * ) // returns true (they cross at (5, 5))
- *
- * @example
- * // Parallel segments (no intersection)
- * lineSegmentsIntersect(
- *   {x: 0, y: 0}, {x: 10, y: 0},   // Horizontal line at y=0
- *   {x: 0, y: 5}, {x: 10, y: 5}    // Horizontal line at y=5
- * ) // returns false (parallel, det = 0)
- *
- * @example
- * // Segments that would intersect if extended, but don't actually intersect
- * lineSegmentsIntersect(
- *   {x: 0, y: 0}, {x: 5, y: 5},    // Short diagonal
- *   {x: 10, y: 0}, {x: 15, y: 5}   // Another short diagonal, offset
- * ) // returns false (intersection point is outside both segments)
- */
 function lineSegmentsIntersect(
   p1: StrokePoint,
   p2: StrokePoint,
   p3: StrokePoint,
   p4: StrokePoint,
 ): boolean {
-  // Calculate the determinant of the direction vectors
-  // This represents the cross product of (p2-p1) and (p4-p3)
   const det = (p2.x - p1.x) * (p4.y - p3.y) - (p4.x - p3.x) * (p2.y - p1.y)
 
-  if (det === 0) return false // Parallel or collinear lines (no unique intersection)
+  if (det === 0) return false
 
-  // Calculate λ: the parameter for segment 1 (p1-p2)
-  // λ = 0 → intersection at p1
-  // λ = 1 → intersection at p2
-  // λ ∈ (0,1) → intersection between p1 and p2
   const lambda = ((p4.y - p3.y) * (p4.x - p1.x) + (p3.x - p4.x) * (p4.y - p1.y))
     / det
 
-  // Calculate γ: the parameter for segment 2 (p3-p4)
-  // γ = 0 → intersection at p3
-  // γ = 1 → intersection at p4
-  // γ ∈ (0,1) → intersection between p3 and p4
   const gamma = ((p1.y - p2.y) * (p4.x - p1.x) + (p2.x - p1.x) * (p4.y - p1.y))
     / det
 
-  // Segments intersect if the intersection point lies on both segments
-  // i.e., both parameters are in the range [0, 1]
   return lambda >= 0 && lambda <= 1 && gamma >= 0 && gamma <= 1
 }
 
-export function onPointerDown(helpers: {
-  point: StrokePoint
-  state: State
-  setState: (key: string, value: any) => void
-  setAppStore: (updates: any) => void
-  nodes?: Node[]
-}) {
-  const initialPath = [helpers.point]
-  helpers.setState("currentPath", initialPath)
-
-  // Check for intersections on pointer down to show preview
-  const intersectedIds = new Set<string>()
-  if (helpers.nodes) {
-    for (const node of helpers.nodes) {
-      if (!node.locked) {
-        if (checkIntersection(initialPath, helpers.state.width, node)) {
-          intersectedIds.add(node.id)
-        }
-      }
-    }
-  }
-
-  helpers.setState("intersectedNodeIds", intersectedIds)
-  helpers.setAppStore({
-    isDrawing: true,
+export const NodeEraserTool = Tool.build(() => {
+  const [state, setState] = createStore({
+    width: 20,
+    currentPath: [] as StrokePoint[],
+    intersectedNodeIds: new Set<string>(),
   })
-}
-
-export function onPointerMove(helpers: {
-  point: StrokePoint
-  state: State
-  setState: (key: string, value: any) => void
-  setAppStore: (updates: any) => void
-  nodes?: Node[]
-}) {
-  const newPath = [...helpers.state.currentPath, helpers.point]
-  helpers.setState("currentPath", newPath)
-
-  // Check for intersections with existing nodes
-  if (helpers.nodes) {
-    const intersectedIds = new Set(helpers.state.intersectedNodeIds)
-
-    for (const node of helpers.nodes) {
-      if (!node.locked && !intersectedIds.has(node.id)) {
-        if (checkIntersection(newPath, helpers.state.width, node)) {
-          intersectedIds.add(node.id)
-        }
-      }
-    }
-
-    helpers.setState("intersectedNodeIds", intersectedIds)
-  }
-}
-
-export function onPointerUp(helpers: {
-  state: State
-  setState: (key: string, value: any) => void
-  setAppStore: (updates: any) => void
-  deleteNodes?: (nodeIds: string[]) => void
-}) {
-  // Delete all intersected nodes
-  if (helpers.deleteNodes && helpers.state.intersectedNodeIds.size > 0) {
-    helpers.deleteNodes(Array.from(helpers.state.intersectedNodeIds))
-  }
-
-  helpers.setState("currentPath", [])
-  helpers.setState("intersectedNodeIds", new Set())
-  helpers.setAppStore({ isDrawing: false })
-}
-
-export function onPointerCancel(helpers: {
-  setState: (key: string, value: any) => void
-  setAppStore: (updates: any) => void
-}) {
-  helpers.setState("currentPath", [])
-  helpers.setState("intersectedNodeIds", new Set())
-  helpers.setAppStore({ isDrawing: false })
-}
-
-export function build() {
-  const [state, setState] = createStore<State>(initialState)
 
   return {
-    state,
-    setState,
+    onPointerDown: (ctx) => {
+      const initialPath = [ctx.point]
+      setState("currentPath", initialPath)
+
+      const intersectedIds = new Set<string>()
+      for (const node of ctx.nodes) {
+        if (!node.locked) {
+          if (checkIntersection(initialPath, state.width, node)) {
+            intersectedIds.add(node.id)
+          }
+        }
+      }
+
+      setState("intersectedNodeIds", intersectedIds)
+    },
+    onPointerMove: (ctx) => {
+      const newPath = [...state.currentPath, ctx.point]
+      setState("currentPath", newPath)
+
+      const intersectedIds = new Set(state.intersectedNodeIds)
+
+      for (const node of ctx.nodes) {
+        if (!node.locked && !intersectedIds.has(node.id)) {
+          if (checkIntersection(newPath, state.width, node)) {
+            intersectedIds.add(node.id)
+          }
+        }
+      }
+
+      setState("intersectedNodeIds", intersectedIds)
+    },
+    onPointerUp: (ctx) => {
+      if (state.intersectedNodeIds.size > 0) {
+        ctx.deleteNodes(Array.from(state.intersectedNodeIds))
+      }
+
+      setState("currentPath", [])
+      setState("intersectedNodeIds", new Set())
+    },
+    onPointerCancel: () => {
+      setState("currentPath", [])
+      setState("intersectedNodeIds", new Set())
+    },
     renderSettings: () => (
       <>
         {/* Width Slider */}
@@ -445,14 +297,13 @@ export function build() {
         </div>
       </>
     ),
-    renderCanvas: (props: ToolCanvasProps) => {
+    renderCanvas: (_props) => {
       return (
         <g style={{ "will-change": "transform" }}>
           {/* Render temporary eraser path preview while drawing */}
           {state.currentPath.length > 0 && (() => {
             const points = state.currentPath
 
-            // Create a path string for the eraser
             const pathData = points
               .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`)
               .join(" ")
@@ -473,4 +324,4 @@ export function build() {
       )
     },
   }
-}
+})

@@ -1,6 +1,6 @@
-import type { DrawEraserNode, Node } from "./index.ts"
 import type { StrokePoint } from "../types"
 import * as Unique from "../Unique.ts"
+import type { DrawEraserNode, Node } from "./index.ts"
 
 export const Type = "DrawEraserNode"
 

@@ -1,6 +1,6 @@
-import type { ImageNode, Node as NodeType } from "./index.ts"
 import type { Bounds } from "../types"
 import * as Unique from "../Unique.ts"
+import type { ImageNode, Node as NodeType } from "./index.ts"
 
 export const Type = "ImageNode"
 

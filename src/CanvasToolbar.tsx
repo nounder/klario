@@ -102,8 +102,7 @@ function ActionButton(props: {
 export function CanvasToolbar(props: CanvasToolbarProps) {
   // Get the current tool instance for rendering settings
   const currentToolInstance = createMemo(() => {
-    const tool = Tools[props.currentTool]
-    return tool?.build()
+    return Tools[props.currentTool]
   })
 
   return (

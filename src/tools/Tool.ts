@@ -1,0 +1,52 @@
+import type { JSX } from "solid-js"
+import type { Node } from "../nodes/index.ts"
+import type { Point, ToolCanvasProps } from "../types.ts"
+
+// Shared context passed to all event handlers
+export interface ToolContext {
+  addNode: (node: Node) => void
+  deleteNodes: (nodeIds: string[]) => void
+  nodes: Node[]
+}
+
+// Tool instance returned by build()
+export interface ToolInstance {
+  onPointerDown?: (point: Point, ctx: ToolContext) => void
+  onPointerMove?: (point: Point, ctx: ToolContext) => void
+  onPointerUp?: (point: Point, ctx: ToolContext) => void
+  onPointerCancel?: () => void
+  renderSettings?: () => JSX.Element
+  renderCanvas?: (props: ToolCanvasProps) => JSX.Element
+}
+
+/**
+ * Type-safe build() function for creating tool instances.
+ *
+ * Event handlers are declared in the factory closure with access to state/setState.
+ *
+ * @example
+ * ```tsx
+ * export const build = Tool.build(() => {
+ *   const [state, setState] = createStore<State>({
+ *     color: "#000000",
+ *     width: 6,
+ *     currentPath: []
+ *   })
+ *
+ *   return {
+ *     onPointerDown: (ctx) => {
+ *       setState("currentPath", [ctx.point])
+ *     },
+ *     onPointerMove: (ctx) => {
+ *       setState("currentPath", [...state.currentPath, ctx.point])
+ *     },
+ *     renderSettings: () => (
+ *       <ColorPicker value={state.color} onChange={(c) => setState("color", c)} />
+ *     )
+ *   }
+ * })
+ * ```
+ */
+export function build(factory: () => ToolInstance): ToolInstance {
+  return factory()
+}

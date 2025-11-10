@@ -1,62 +1,38 @@
 import { createStore } from "solid-js/store"
-import type { SetStoreFunction } from "solid-js/store"
-import type { AppState } from "../types"
 
-import * as ImageNode from "../nodes/ImageNode"
+import * as ImageNode from "../nodes/ImageNode.tsx"
 import type { Node } from "../nodes/index.ts"
-import type { StrokePoint } from "../types"
-import * as Unique from "../Unique"
-
-export interface State {
-  uri: string
-  width: number
-  height: number
-}
-
-export interface ImageTool {
-  type: "ImageTool"
-  state: State
-}
+import * as Unique from "../Unique.ts"
+import * as Tool from "./Tool.ts"
 
 export const NodeType = ImageNode.Type
 
-export const initialState: State = {
-  uri: "",
-  width: 200,
-  height: 200,
-}
-
-
-
-export function onPointerDown(helpers: {
-  point: StrokePoint
-  state: State
-  addNode: (node: Node) => void
-}) {
-  if (helpers.state.uri) {
-    const newNode: Node = {
-      id: Unique.token(16),
-      type: "ImageNode",
-      parent: null,
-      bounds: {
-        x: helpers.point.x,
-        y: helpers.point.y,
-        width: helpers.state.width,
-        height: helpers.state.height,
-      },
-      locked: false,
-      uri: helpers.state.uri,
-    }
-    helpers.addNode(newNode)
-  }
-}
-
-export function build() {
-  const [state, setState] = createStore<State>(initialState)
+export const ImageTool = Tool.build(() => {
+  const [state, setState] = createStore({
+    uri: "",
+    width: 200,
+    height: 200,
+  })
 
   return {
-    state,
-    setState,
+    onPointerDown: (ctx) => {
+      if (state.uri) {
+        const newNode: Node = {
+          id: Unique.token(16),
+          type: "ImageNode",
+          parent: null,
+          bounds: {
+            x: ctx.point.x,
+            y: ctx.point.y,
+            width: state.width,
+            height: state.height,
+          },
+          locked: false,
+          uri: state.uri,
+        }
+        ctx.addNode(newNode)
+      }
+    },
     renderSettings: () => (
       <>
         <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
@@ -116,4 +92,4 @@ export function build() {
       </>
     ),
   }
-}
+})

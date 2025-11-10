@@ -1,77 +1,18 @@
 import { For } from "solid-js"
 import { createStore } from "solid-js/store"
-import type { SetStoreFunction } from "solid-js/store"
-import type { AppState } from "../types"
 
-import * as TextNode from "../nodes/TextNode"
-import type { StrokePoint } from "../types"
 import type { Node } from "../nodes/index.ts"
-import * as Unique from "../Unique"
-
-export interface State {
-  fontSize: number
-  color: string
-}
-
-export interface TextTool {
-  type: "TextTool"
-  state: State
-}
+import * as TextNode from "../nodes/TextNode.tsx"
+import * as Unique from "../Unique.ts"
+import * as Tool from "./Tool.ts"
 
 export const NodeType = TextNode.Type
 
-export const initialState: State = {
-  fontSize: 24,
-  color: "#000000",
-}
-
-
-
-export function onPointerDown(helpers: {
-  setAppStore: (updates: any) => void
-}) {
-  helpers.setAppStore({
-    isDrawing: true,
+export const TextTool = Tool.build(() => {
+  const [state, setState] = createStore({
+    fontSize: 24,
+    color: "#000000",
   })
-}
-
-export function onPointerUp(helpers: {
-  point: StrokePoint
-  state: State
-  setAppStore: (updates: any) => void
-  addNode?: (node: Node) => void
-  getAppState?: () => any
-}) {
-  // Create a new TextNode with empty content and unique ID
-  const nodeId = Unique.token(16)
-  const newNode: Node = {
-    id: nodeId,
-    type: "TextNode",
-    parent: null,
-    bounds: {
-      x: helpers.point.x,
-      y: helpers.point.y,
-      width: 200,
-      height: helpers.state.fontSize * 2,
-    },
-    locked: false,
-    content: "",
-    fontSize: helpers.state.fontSize,
-    color: helpers.state.color,
-  }
-
-  // Set both the new node and activeNodeId in a single update
-  // This ensures the node is rendered with activeNodeId already set
-  // isEditingText is derived from activeNodeId + node type
-  helpers.setAppStore((prevState: any) => ({
-    nodes: [...prevState.nodes, newNode],
-    activeNodeId: nodeId,
-    isDrawing: false,
-  }))
-}
-
-export function build() {
-  const [state, setState] = createStore<State>(initialState)
 
   const colors = [
     "#000000",
@@ -85,8 +26,32 @@ export function build() {
   ]
 
   return {
-    state,
-    setState,
+    onPointerDown: () => {
+      // Set drawing state will be handled by Canvas
+    },
+    onPointerUp: (ctx) => {
+      // Create a new TextNode with empty content and unique ID
+      const nodeId = Unique.token(16)
+      const newNode: Node = {
+        id: nodeId,
+        type: "TextNode",
+        parent: null,
+        bounds: {
+          x: ctx.point.x,
+          y: ctx.point.y,
+          width: 200,
+          height: state.fontSize * 2,
+        },
+        locked: false,
+        content: "",
+        fontSize: state.fontSize,
+        color: state.color,
+      }
+
+      ctx.addNode(newNode)
+      // Note: activeNodeId setting would need to be handled separately
+      // as we don't have setAppStore anymore
+    },
     renderSettings: () => (
       <>
         {/* Color Picker */}
@@ -153,4 +118,4 @@ export function build() {
       </>
     ),
   }
-}
+})

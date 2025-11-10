@@ -1,7 +1,7 @@
 import * as Strokes from "../strokes/index.ts"
-import type { Node, StrokeNode } from "./index.ts"
 import type { Stroke } from "../types"
 import * as Unique from "../Unique.ts"
+import type { Node, StrokeNode } from "./index.ts"
 
 export const Type = "StrokeNode"
 

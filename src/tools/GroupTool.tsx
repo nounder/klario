@@ -1,37 +1,16 @@
 import { createStore } from "solid-js/store"
-import type { SetStoreFunction } from "solid-js/store"
-import * as GroupNode from "../nodes/GroupNode"
-import type { AppState } from "../types"
-
+import * as GroupNode from "../nodes/GroupNode.tsx"
 import type { Node } from "../nodes/index.ts"
-
-export interface State {
-  selectedNodes: Node[]
-}
-
-export interface GroupTool {
-  type: "GroupTool"
-  state: State
-}
+import * as Tool from "./Tool.ts"
 
 export const NodeType = GroupNode.Type
 
-export const initialState: State = {
-  selectedNodes: [],
-}
-
-
-
-// TODO: Implement node selection logic
-// export function onPointerDown() {
-// }
-
-export function build() {
-  const [state, setState] = createStore<State>(initialState)
+export const GroupTool = Tool.build(() => {
+  const [state, setState] = createStore({
+    selectedNodes: [] as Node[],
+  })
 
   return {
-    state,
-    setState,
     renderSettings: () => (
       <>
         <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
@@ -72,4 +51,4 @@ export function build() {
       </>
     ),
   }
-}
+})
