@@ -185,10 +185,8 @@ export default function Canvas(props: {
   const handlePointerEnter = (e: PointerEvent) => {
     if (!store.currentToolInstance) return
 
-    const tool = Tools[store.currentTool]
-
-    // Call the tool's onPointerEnter handler if it exists
-    tool?.onPointerEnter?.({
+    const tool = Tools[store.currentTool] // Call the tool's onPointerEnter handler if it exists
+    ;(tool as any)?.onPointerEnter?.({
       setAppStore: (updates: any) => {
         setStore(updates)
       },
@@ -202,14 +200,11 @@ export default function Canvas(props: {
     // Call the tool's onPointerLeave handler if it exists
     if (store.currentToolInstance) {
       const tool = Tools[store.currentTool]
-
-      if (tool && "onPointerMove" in tool) {
-        tool?.onPointerLeave({
-          setAppStore: (updates: any) => {
-            setStore(updates)
-          },
-        } as any)
-      }
+      ;(tool as any)?.onPointerLeave?.({
+        setAppStore: (updates: any) => {
+          setStore(updates)
+        },
+      })
     }
 
     stopDrawing(e)
@@ -395,7 +390,7 @@ export default function Canvas(props: {
     if (!svgRef) return
     // Don't auto-update if bounds prop is provided
     if (props.bounds) return
-    
+
     const rect = svgRef.getBoundingClientRect()
     setStore("viewBox", (vb) => ({
       ...vb,
@@ -479,8 +474,6 @@ export default function Canvas(props: {
       setStore("panStart", null)
     }
   }
-
-
 
   return (
     <div
