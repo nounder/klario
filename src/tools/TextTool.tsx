@@ -1,15 +1,26 @@
 import { For } from "solid-js"
 import { createStore } from "solid-js/store"
 import type { SetStoreFunction } from "solid-js/store"
-import type { AppState, TextToolState } from "../types"
+import type { AppState } from "../types"
 
 import * as TextNode from "../nodes/TextNode"
-import type { Node, StrokePoint } from "../types"
+import type { StrokePoint } from "../types"
+import type { Node } from "../nodes/index.ts"
 import * as Unique from "../Unique"
+
+export interface State {
+  fontSize: number
+  color: string
+}
+
+export interface TextTool {
+  type: "TextTool"
+  state: State
+}
 
 export const NodeType = TextNode.Type
 
-export const initialState: TextToolState = {
+export const initialState: State = {
   fontSize: 24,
   color: "#000000",
 }
@@ -36,7 +47,7 @@ export function onPointerDown(helpers: {
 
 export function onPointerUp(helpers: {
   point: StrokePoint
-  state: TextToolState
+  state: State
   setAppStore: (updates: any) => void
   addNode?: (node: Node) => void
   getAppState?: () => any
@@ -73,7 +84,7 @@ export function renderSettings(props: {
   setStore: SetStoreFunction<AppState>
   activeNode: Node | null
 }) {
-  const [state, setState] = createStore<TextToolState>(initialState)
+  const [state, setState] = createStore<State>(initialState)
 
   const colors = [
     "#000000",

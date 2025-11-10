@@ -16,15 +16,15 @@ function base36(bytes: Uint8Array): string {
   while (zeros < bytes.length && bytes[zeros] === 0) zeros++
 
   let n = 0n
-  for (let i = zeros; i < bytes.length; i++) n = (n << 8n) + BigInt(bytes[i])
+  for (let i = zeros; i < bytes.length; i++) n = (n << 8n) + BigInt(bytes[i]!)
 
   return "0".repeat(zeros) + (n === 0n ? "" : n.toString(36))
 }
 
 export function uuid4bytes(): Uint8Array {
   const buf = randomBytes(16)
-  buf[6] = (buf[6] & 0x0f) | 0x40 // version 4
-  buf[8] = (buf[8] & 0x3f) | 0x80 // variant
+  buf[6] = (buf[6]! & 0x0f) | 0x40 // version 4
+  buf[8] = (buf[8]! & 0x3f) | 0x80 // variant
 
   return buf
 }
@@ -43,11 +43,11 @@ function uuid7bytes(): Uint8Array {
 
   // 12-bit random A (1.5 bytes)
   crypto.getRandomValues(buf.subarray(6, 8))
-  buf[6] = (buf[6] & 0x0f) | 0x70 // version 7
+  buf[6] = (buf[6]! & 0x0f) | 0x70 // version 7
 
   // 2-bit variant + 62-bit random B (8 bytes)
   crypto.getRandomValues(buf.subarray(8, 16))
-  buf[8] = (buf[8] & 0x3f) | 0x80 // variant
+  buf[8] = (buf[8]! & 0x3f) | 0x80 // variant
 
   return buf
 }

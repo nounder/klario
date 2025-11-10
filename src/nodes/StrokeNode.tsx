@@ -1,5 +1,5 @@
 import * as Strokes from "../strokes/index.ts"
-import type { Node, StrokeNode } from "../types"
+import type { Node, StrokeNode } from "./index.ts"
 
 export const Type = "StrokeNode"
 

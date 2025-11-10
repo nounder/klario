@@ -1,3 +1,4 @@
+import type { JSX } from "solid-js"
 import type { StrokePoint } from "../types"
 
 export interface StrokeOptions {

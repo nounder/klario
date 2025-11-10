@@ -1,13 +1,22 @@
 import { createStore } from "solid-js/store"
 import type { SetStoreFunction } from "solid-js/store"
 import * as GroupNode from "../nodes/GroupNode"
-import type { AppState, GroupToolState } from "../types"
+import type { AppState } from "../types"
 
-import type { Node } from "../types"
+import type { Node } from "../nodes/index.ts"
+
+export interface State {
+  selectedNodes: Node[]
+}
+
+export interface GroupTool {
+  type: "GroupTool"
+  state: State
+}
 
 export const NodeType = GroupNode.Type
 
-export const initialState: GroupToolState = {
+export const initialState: State = {
   selectedNodes: [],
 }
 
@@ -31,7 +40,7 @@ export function renderSettings(props: {
   setStore: SetStoreFunction<AppState>
   activeNode: Node | null
 }) {
-  const [state, setState] = createStore<GroupToolState>(initialState)
+  const [state, setState] = createStore<State>(initialState)
 
   return {
     state,

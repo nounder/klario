@@ -1,19 +1,17 @@
 import { createEffect, createMemo, For } from "solid-js"
 import type { SetStoreFunction } from "solid-js/store"
 import * as Nodes from "./nodes/index.ts"
+import type { Node } from "./nodes/index.ts"
 import { simplifyStroke } from "./strokes/simplification.ts"
 import * as Tools from "./tools/index.ts"
-import type { AppState, Bounds, Node, StrokePoint } from "./types"
+import type { AppState, Bounds, StrokePoint } from "./types"
 
-// Simple point type for panning coordinates
 type Point = { x: number; y: number }
 
-export interface CanvasProps {
+export default function Canvas(props: {
   store: AppState
   setStore: SetStoreFunction<AppState>
-}
-
-export default function Canvas(props: CanvasProps) {
+}) {
   const store = props.store
   const setStore = props.setStore
 
@@ -94,8 +92,8 @@ export default function Canvas(props: CanvasProps) {
     const tool = Tools[store.currentTool]
 
     // Call the tool's onPointerDown handler with appropriate helpers
-    if (tool && "onPointerDown" in tool && tool.onPointerDown) {
-      tool.onPointerDown({
+    if (tool && "onPointerDown" in tool) {
+      tool?.onPointerDown({
         point,
         state: store.currentToolInstance.state,
         setState: store.currentToolInstance.setState,
@@ -109,7 +107,7 @@ export default function Canvas(props: CanvasProps) {
           setStore("nodes", (nodes) => [...nodes, node])
         },
         nodes: store.nodes,
-      } as any)
+      })
     }
   }
 
@@ -133,7 +131,7 @@ export default function Canvas(props: CanvasProps) {
     const tool = Tools[store.currentTool]
 
     // Call the tool's onPointerMove handler if it exists
-    if (tool && "onPointerMove" in tool && tool.onPointerMove) {
+    if (tool && "onPointerMove" in tool) {
       tool.onPointerMove({
         point,
         state: store.currentToolInstance.state,
@@ -148,31 +146,34 @@ export default function Canvas(props: CanvasProps) {
 
   const handlePointerEnter = (e: PointerEvent) => {
     if (!store.currentToolInstance) return
-    
+
     const tool = Tools[store.currentTool]
-    
+
     // Call the tool's onPointerEnter handler if it exists
     tool?.onPointerEnter?.({
       setAppStore: (updates: any) => {
         setStore(updates)
       },
-    } as any)
+    })
   }
 
   const handlePointerLeave = (e: PointerEvent) => {
     // Clear pointer position when leaving canvas
     setStore("pointerPosition", null)
-    
+
     // Call the tool's onPointerLeave handler if it exists
     if (store.currentToolInstance) {
       const tool = Tools[store.currentTool]
-      tool?.onPointerLeave?.({
-        setAppStore: (updates: any) => {
-          setStore(updates)
-        },
-      } as any)
+
+      if (tool && "onPointerMove" in tool) {
+        tool?.onPointerLeave({
+          setAppStore: (updates: any) => {
+            setStore(updates)
+          },
+        } as any)
+      }
     }
-    
+
     stopDrawing(e)
   }
 
@@ -194,7 +195,7 @@ export default function Canvas(props: CanvasProps) {
       const tool = Tools[store.currentTool]
 
       // Call the tool's onPointerUp handler if it exists
-      if (tool && "onPointerUp" in tool && tool.onPointerUp) {
+      if (tool && "onPointerUp" in tool) {
         const point = e ? getCoordinates(e) : { x: 0, y: 0 }
         tool.onPointerUp({
           point,
@@ -227,7 +228,7 @@ export default function Canvas(props: CanvasProps) {
           },
           calculateBounds,
           simplifyStroke,
-        } as any)
+        })
       } else {
         setStore("isDrawing", false)
         setStore("activePointerId", null)
@@ -247,7 +248,7 @@ export default function Canvas(props: CanvasProps) {
       const tool = Tools[store.currentTool]
 
       // Call the tool's onPointerCancel handler if it exists
-      if (tool && "onPointerCancel" in tool && tool.onPointerCancel) {
+      if (tool && "onPointerCancel" in tool) {
         tool.onPointerCancel({
           setState: store.currentToolInstance.setState,
           setAppStore: (updates: any) => {
@@ -517,7 +518,9 @@ export default function Canvas(props: CanvasProps) {
         </For>
 
         {/* Render tool-specific canvas overlays (optional renderCanvas method) */}
-        {store.currentToolInstance?.renderCanvas?.({ pointerPosition: store.pointerPosition })}
+        {store.currentToolInstance?.renderCanvas?.({
+          pointerPosition: store.pointerPosition,
+        })}
       </svg>
     </div>
   )

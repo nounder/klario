@@ -3,15 +3,25 @@ import type { SetStoreFunction } from "solid-js/store"
 import type {
   AppState,
   Bounds,
-  Node,
-  NodeEraserToolState,
   StrokePoint,
   ToolCanvasProps,
 } from "../types"
+import type { Node } from "../nodes/index.ts"
+
+export interface State {
+  width: number
+  currentPath: StrokePoint[]
+  intersectedNodeIds: Set<string>
+}
+
+export interface NodeEraserTool {
+  type: "NodeEraserTool"
+  state: State
+}
 
 export const NodeType = null // Eraser doesn't create nodes
 
-export const initialState: NodeEraserToolState = {
+export const initialState: State = {
   width: 20,
   currentPath: [],
   intersectedNodeIds: new Set(),
@@ -316,7 +326,7 @@ function lineSegmentsIntersect(
 
 export function onPointerDown(helpers: {
   point: StrokePoint
-  state: NodeEraserToolState
+  state: State
   setState: (key: string, value: any) => void
   setAppStore: (updates: any) => void
   nodes?: Node[]
@@ -344,7 +354,7 @@ export function onPointerDown(helpers: {
 
 export function onPointerMove(helpers: {
   point: StrokePoint
-  state: NodeEraserToolState
+  state: State
   setState: (key: string, value: any) => void
   setAppStore: (updates: any) => void
   nodes?: Node[]
@@ -369,7 +379,7 @@ export function onPointerMove(helpers: {
 }
 
 export function onPointerUp(helpers: {
-  state: NodeEraserToolState
+  state: State
   setState: (key: string, value: any) => void
   setAppStore: (updates: any) => void
   deleteNodes?: (nodeIds: string[]) => void
@@ -397,7 +407,7 @@ export function renderSettings(props: {
   setStore: SetStoreFunction<AppState>
   activeNode: Node | null
 }) {
-  const [state, setState] = createStore<NodeEraserToolState>(initialState)
+  const [state, setState] = createStore<State>(initialState)
 
   return {
     state,

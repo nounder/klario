@@ -1,14 +1,26 @@
 import { createStore } from "solid-js/store"
 import type { SetStoreFunction } from "solid-js/store"
-import type { AppState, ImageToolState } from "../types"
+import type { AppState } from "../types"
 
 import * as ImageNode from "../nodes/ImageNode"
-import type { Node, StrokePoint } from "../types"
+import type { Node } from "../nodes/index.ts"
+import type { StrokePoint } from "../types"
 import * as Unique from "../Unique"
+
+export interface State {
+  uri: string
+  width: number
+  height: number
+}
+
+export interface ImageTool {
+  type: "ImageTool"
+  state: State
+}
 
 export const NodeType = ImageNode.Type
 
-export const initialState: ImageToolState = {
+export const initialState: State = {
   uri: "",
   width: 200,
   height: 200,
@@ -28,7 +40,7 @@ export function onPointerLeave(helpers: {
 
 export function onPointerDown(helpers: {
   point: StrokePoint
-  state: ImageToolState
+  state: State
   addNode: (node: Node) => void
 }) {
   if (helpers.state.uri) {
@@ -53,7 +65,7 @@ export function renderSettings(props: {
   setStore: SetStoreFunction<AppState>
   activeNode: Node | null
 }) {
-  const [state, setState] = createStore<ImageToolState>(initialState)
+  const [state, setState] = createStore<State>(initialState)
 
   return {
     state,

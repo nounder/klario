@@ -1,14 +1,25 @@
 import { createStore } from "solid-js/store"
 import type { SetStoreFunction } from "solid-js/store"
-import type { AppState, DrawEraserToolState, ToolCanvasProps } from "../types"
+import type { AppState, ToolCanvasProps } from "../types"
 
 import * as DrawEraserNode from "../nodes/DrawEraserNode"
-import type { Node, StrokePoint } from "../types"
+import type { StrokePoint } from "../types"
+import type { Node } from "../nodes/index.ts"
 import * as Unique from "../Unique"
+
+export interface State {
+  width: number
+  currentPath: StrokePoint[]
+}
+
+export interface DrawEraserTool {
+  type: "DrawEraserTool"
+  state: State
+}
 
 export const NodeType = DrawEraserNode.Type
 
-export const initialState: DrawEraserToolState = {
+export const initialState: State = {
   width: 20,
   currentPath: [],
 }
@@ -38,7 +49,7 @@ export function onPointerDown(helpers: {
 
 export function onPointerMove(helpers: {
   point: StrokePoint
-  state: DrawEraserToolState
+  state: State
   setState: (key: string, value: any) => void
 }) {
   helpers.setState("currentPath", (prev: StrokePoint[]) => [
@@ -48,7 +59,7 @@ export function onPointerMove(helpers: {
 }
 
 export function onPointerUp(helpers: {
-  state: DrawEraserToolState
+  state: State
   setState: (key: string, value: any) => void
   setAppStore: (updates: any) => void
   calculateBounds: (points: StrokePoint[], width?: number) => any
@@ -92,7 +103,7 @@ export function renderSettings(props: {
   setStore: SetStoreFunction<AppState>
   activeNode: Node | null
 }) {
-  const [state, setState] = createStore<DrawEraserToolState>(initialState)
+  const [state, setState] = createStore<State>(initialState)
 
   return {
     state,

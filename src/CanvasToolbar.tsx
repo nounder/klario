@@ -1,7 +1,8 @@
 import { createEffect, For } from "solid-js"
 import type { SetStoreFunction } from "solid-js/store"
 import * as Tools from "./tools/index.ts"
-import type { AppState, ToolType } from "./types"
+import type { AppState } from "./types"
+import type { ToolType } from "./tools/index.ts"
 
 interface CanvasToolbarProps {
   store: AppState

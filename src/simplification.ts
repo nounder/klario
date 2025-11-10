@@ -1,4 +1,4 @@
-import type { StrokePoint } from "../types"
+import type { StrokePoint } from "./types.ts"
 
 // Douglas-Peucker algorithm for stroke simplification
 

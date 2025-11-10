@@ -1,5 +1,5 @@
 import { onMount } from "solid-js"
-import type { Node as NodeType, TextNode } from "../types"
+import type { Node as NodeType, TextNode } from "./index.ts"
 
 export const Type = "TextNode"
 

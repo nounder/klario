@@ -1,4 +1,4 @@
-import type { ImageNode, Node as NodeType } from "../types"
+import type { ImageNode, Node as NodeType } from "./index.ts"
 
 export const Type = "ImageNode"
 

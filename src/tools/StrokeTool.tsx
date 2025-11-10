@@ -1,16 +1,29 @@
 import { For } from "solid-js"
 import { createStore } from "solid-js/store"
 import type { SetStoreFunction } from "solid-js/store"
-import type { AppState, StrokeToolState, ToolCanvasProps } from "../types"
+import type { AppState, ToolCanvasProps } from "../types"
 
 import * as StrokeNode from "../nodes/StrokeNode"
 import type { StrokeType } from "../strokes/index.ts"
-import type { Node, StrokePoint } from "../types"
+import type { StrokePoint } from "../types"
+import type { Node } from "../nodes/index.ts"
 import * as Unique from "../Unique"
+
+export interface State {
+  strokeType: StrokeType
+  color: string
+  width: number
+  currentPath: StrokePoint[]
+}
+
+export interface StrokeTool {
+  type: "StrokeTool"
+  state: State
+}
 
 export const NodeType = StrokeNode.Type
 
-export const initialState: StrokeToolState = {
+export const initialState: State = {
   strokeType: "MarkerStroke",
   color: "#000000",
   width: 6,
@@ -42,7 +55,7 @@ export function onPointerDown(helpers: {
 
 export function onPointerMove(helpers: {
   point: StrokePoint
-  state: StrokeToolState
+  state: State
   setState: (key: string, value: any) => void
 }) {
   helpers.setState("currentPath", (prev: StrokePoint[]) => [
@@ -52,7 +65,7 @@ export function onPointerMove(helpers: {
 }
 
 export function onPointerUp(helpers: {
-  state: StrokeToolState
+  state: State
   setState: (key: string, value: any) => void
   setAppStore: (updates: any) => void
   calculateBounds: (points: StrokePoint[], width?: number) => any
@@ -101,7 +114,7 @@ export function renderSettings(props: {
   setStore: SetStoreFunction<AppState>
   activeNode: Node | null
 }) {
-  const [state, setState] = createStore<StrokeToolState>(initialState)
+  const [state, setState] = createStore<State>(initialState)
   
   const colors = [
     "#000000",
