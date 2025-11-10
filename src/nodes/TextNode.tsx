@@ -1,7 +1,27 @@
 import { onMount } from "solid-js"
 import type { Node as NodeType, TextNode } from "./index.ts"
+import type { Bounds } from "../types"
+import * as Unique from "../Unique.ts"
 
 export const Type = "TextNode"
+
+export function make(props?: {
+  content?: string
+  fontSize?: number
+  color?: string
+  bounds?: Bounds
+}): TextNode {
+  return {
+    id: Unique.token(16),
+    type: Type,
+    parent: null,
+    bounds: props?.bounds ?? { x: 0, y: 0, width: 0, height: 0 },
+    locked: false,
+    content: props?.content ?? "",
+    fontSize: props?.fontSize ?? 16,
+    color: props?.color ?? "#000000",
+  }
+}
 
 export function render(
   node: TextNode,

@@ -1,7 +1,23 @@
 import type { DrawEraserNode, Node } from "./index.ts"
 import type { StrokePoint } from "../types"
+import * as Unique from "../Unique.ts"
 
 export const Type = "DrawEraserNode"
+
+export function make(props?: {
+  points?: StrokePoint[]
+  width?: number
+}): DrawEraserNode {
+  return {
+    id: Unique.token(16),
+    type: Type,
+    parent: null,
+    bounds: { x: 0, y: 0, width: 0, height: 0 },
+    locked: false,
+    points: props?.points ?? [],
+    width: props?.width ?? 2,
+  }
+}
 
 function createSmoothPath(points: StrokePoint[]): string {
   if (points.length === 0) return ""
