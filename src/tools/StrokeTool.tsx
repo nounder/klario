@@ -110,10 +110,7 @@ export function onPointerCancel(helpers: {
   helpers.setAppStore({ isDrawing: false })
 }
 
-export function renderSettings(props: {
-  setStore: SetStoreFunction<AppState>
-  activeNode: Node | null
-}) {
+export function build() {
   const [state, setState] = createStore<State>(initialState)
   
   const colors = [
@@ -137,7 +134,7 @@ export function renderSettings(props: {
   return {
     state,
     setState,
-    ui: (
+    renderSettings: () => (
       <>
         {/* Color Picker */}
         <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>

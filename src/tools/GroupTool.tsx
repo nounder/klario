@@ -36,16 +36,13 @@ export function onPointerLeave(helpers: {
 // export function onPointerDown() {
 // }
 
-export function renderSettings(props: {
-  setStore: SetStoreFunction<AppState>
-  activeNode: Node | null
-}) {
+export function build() {
   const [state, setState] = createStore<State>(initialState)
 
   return {
     state,
     setState,
-    ui: (
+    renderSettings: () => (
       <>
         <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
           <span

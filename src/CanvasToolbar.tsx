@@ -131,13 +131,7 @@ export default function CanvasToolbar(props: CanvasToolbarProps) {
   // Update tool instance when tool changes
   createEffect(() => {
     const tool = Tools[props.store.currentTool]
-    const activeNode = props.store.nodes.find(n =>
-      n.id === props.store.activeNodeId
-    )
-    const instance = tool?.renderSettings({
-      setStore: props.setStore,
-      activeNode: activeNode || null,
-    })
+    const instance = tool?.build()
     props.setStore({ currentToolInstance: instance || null })
   })
 
@@ -166,7 +160,7 @@ export default function CanvasToolbar(props: CanvasToolbarProps) {
       />
 
       {/* Render tool-specific settings */}
-      {props.store.currentToolInstance?.ui}
+      {props.store.currentToolInstance?.renderSettings?.()}
 
       <ActionButton
         onClick={() => {

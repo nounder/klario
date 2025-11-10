@@ -403,16 +403,13 @@ export function onPointerCancel(helpers: {
   helpers.setAppStore({ isDrawing: false })
 }
 
-export function renderSettings(props: {
-  setStore: SetStoreFunction<AppState>
-  activeNode: Node | null
-}) {
+export function build() {
   const [state, setState] = createStore<State>(initialState)
 
   return {
     state,
     setState,
-    ui: (
+    renderSettings: () => (
       <>
         {/* Width Slider */}
         <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
