@@ -25,17 +25,7 @@ export const initialState: State = {
   color: "#000000",
 }
 
-export function onPointerEnter(helpers: {
-  setAppStore: (updates: any) => void
-}) {
-  helpers.setAppStore({ rootStyle: {} })
-}
 
-export function onPointerLeave(helpers: {
-  setAppStore: (updates: any) => void
-}) {
-  helpers.setAppStore({ rootStyle: {} })
-}
 
 export function onPointerDown(helpers: {
   setAppStore: (updates: any) => void

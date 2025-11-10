@@ -26,17 +26,7 @@ export const initialState: State = {
   height: 200,
 }
 
-export function onPointerEnter(helpers: {
-  setAppStore: (updates: any) => void
-}) {
-  helpers.setAppStore({ rootStyle: {} })
-}
 
-export function onPointerLeave(helpers: {
-  setAppStore: (updates: any) => void
-}) {
-  helpers.setAppStore({ rootStyle: {} })
-}
 
 export function onPointerDown(helpers: {
   point: StrokePoint

@@ -27,17 +27,7 @@ export const initialState: State = {
   intersectedNodeIds: new Set(),
 }
 
-export function onPointerEnter(helpers: {
-  setAppStore: (updates: any) => void
-}) {
-  helpers.setAppStore({ rootStyle: { cursor: "none" } })
-}
 
-export function onPointerLeave(helpers: {
-  setAppStore: (updates: any) => void
-}) {
-  helpers.setAppStore({ rootStyle: {} })
-}
 
 // Helper function to check if a point is within a certain distance of a line segment
 function pointToSegmentDistance(
@@ -457,7 +447,7 @@ export function build() {
     ),
     renderCanvas: (props: ToolCanvasProps) => {
       return (
-        <g style={{ "will-change": "transform", cursor: "none" }}>
+        <g style={{ "will-change": "transform" }}>
           {/* Render temporary eraser path preview while drawing */}
           {state.currentPath.length > 0 && (() => {
             const points = state.currentPath
@@ -479,19 +469,6 @@ export function build() {
               />
             )
           })()}
-
-          {/* Render cursor circle */}
-          {props.pointerPosition && (
-            <circle
-              cx={props.pointerPosition.x}
-              cy={props.pointerPosition.y}
-              r={state.width / 2}
-              fill="none"
-              stroke="rgba(255, 0, 0, 0.5)"
-              stroke-width={2}
-              pointer-events="none"
-            />
-          )}
         </g>
       )
     },

@@ -30,17 +30,7 @@ export const initialState: State = {
   currentPath: [],
 }
 
-export function onPointerEnter(helpers: {
-  setAppStore: (updates: any) => void
-}) {
-  helpers.setAppStore({ rootStyle: { cursor: "none" } })
-}
 
-export function onPointerLeave(helpers: {
-  setAppStore: (updates: any) => void
-}) {
-  helpers.setAppStore({ rootStyle: {} })
-}
 
 export function onPointerDown(helpers: {
   point: StrokePoint
@@ -238,7 +228,7 @@ export function build() {
     ),
     renderCanvas: (props: ToolCanvasProps) => {
       return (
-        <g style={{ "will-change": "transform", cursor: "none" }}>
+        <g style={{ "will-change": "transform" }}>
           {/* Render temporary stroke preview while drawing */}
           {state.currentPath.length > 0 && (() => {
             const node = {
@@ -257,19 +247,6 @@ export function build() {
 
             return StrokeNode.render(node)
           })()}
-
-          {/* Render cursor circle */}
-          {props.pointerPosition && (
-            <circle
-              cx={props.pointerPosition.x}
-              cy={props.pointerPosition.y}
-              r={state.width / 2}
-              fill="none"
-              stroke={state.color}
-              stroke-opacity={0.5}
-              pointer-events="none"
-            />
-          )}
         </g>
       )
     },
