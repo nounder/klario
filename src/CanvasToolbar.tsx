@@ -2,7 +2,7 @@ import { createMemo, For } from "solid-js"
 import * as Tools from "./tools/index.ts"
 import type { ToolType } from "./tools/index.ts"
 
-interface CanvasToolbarProps {
+type CanvasToolbarProps = {
   currentTool: ToolType
   onToolChange: (type: ToolType) => void
   onClearCanvas?: () => void

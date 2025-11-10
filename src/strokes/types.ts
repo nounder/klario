@@ -1,7 +1,7 @@
 import type { JSX } from "solid-js"
 import type { StrokePoint } from "../types"
 
-export interface StrokeOptions {
+export type StrokeOptions = {
   width: number
   color: string
 }

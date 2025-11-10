@@ -2,12 +2,12 @@ import type { Node } from "./nodes/index.ts"
 import type { ToolType } from "./tools/index.ts"
 
 // Base types
-export interface Point {
+export type Point = {
   x: number
   y: number
 }
 
-export interface StrokePoint {
+export type StrokePoint = {
   x: number
   y: number
   pressure?: number
@@ -17,11 +17,11 @@ export interface StrokePoint {
   twist?: number
 }
 
-export interface ToolCanvasProps {
+export type ToolCanvasProps = {
   pointerPosition: Point | null
 }
 
-export interface Bounds {
+export type Bounds = {
   x: number
   y: number
   width: number
@@ -29,7 +29,7 @@ export interface Bounds {
 }
 
 // Stroke types (discriminated union)
-export interface PenStroke {
+export type PenStroke = {
   type: "PenStroke"
   points: StrokePoint[]
   color: string
@@ -37,7 +37,7 @@ export interface PenStroke {
   bounds: Bounds
 }
 
-export interface MarkerStroke {
+export type MarkerStroke = {
   type: "MarkerStroke"
   points: StrokePoint[]
   color: string
@@ -49,7 +49,7 @@ export type Stroke =
   | PenStroke
   | MarkerStroke
 
-export interface ViewBox {
+export type ViewBox = {
   x: number
   y: number
   width: number
@@ -61,7 +61,7 @@ export type StrokeType =
   | "MarkerStroke"
 
 // Application state (shared across components)
-export interface AppState {
+export type AppState = {
   nodes: Node[]
   currentTool: ToolType
   currentToolInstance: any | null
@@ -70,7 +70,7 @@ export interface AppState {
 }
 
 // Canvas-specific state (local to Canvas component)
-export interface CanvasState {
+export type CanvasState = {
   viewBox: ViewBox
   isDrawing: boolean
   activePointerId: number | null

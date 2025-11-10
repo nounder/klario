@@ -1,6 +1,6 @@
 import type { Bounds, Stroke, StrokePoint } from "../types"
 
-export interface NodeBase {
+export type NodeBase = {
   id: string
   type: NodeType
   parent: Node | null
@@ -8,29 +8,29 @@ export interface NodeBase {
   locked: boolean
 }
 
-export interface StrokeNode extends NodeBase {
+export type StrokeNode = NodeBase & {
   type: "StrokeNode"
   stroke: Omit<Stroke, "bounds">
 }
 
-export interface ImageNode extends NodeBase {
+export type ImageNode = NodeBase & {
   type: "ImageNode"
   uri: string
 }
 
-export interface GroupNode extends NodeBase {
+export type GroupNode = NodeBase & {
   type: "GroupNode"
   children: Node[]
 }
 
-export interface TextNode extends NodeBase {
+export type TextNode = NodeBase & {
   type: "TextNode"
   content: string
   fontSize: number
   color: string
 }
 
-export interface DrawEraserNode extends NodeBase {
+export type DrawEraserNode = NodeBase & {
   type: "DrawEraserNode"
   points: StrokePoint[]
   width: number

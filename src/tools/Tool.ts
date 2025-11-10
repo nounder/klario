@@ -3,17 +3,18 @@ import type { Node } from "../nodes/index.ts"
 import type { Point, ToolCanvasProps } from "../types.ts"
 
 // Shared context passed to all event handlers
-export interface ToolContext {
+export type ToolContext = {
+  point: Point
   addNode: (node: Node) => void
   deleteNodes: (nodeIds: string[]) => void
   nodes: Node[]
 }
 
 // Tool instance returned by build()
-export interface ToolInstance {
-  onPointerDown?: (point: Point, ctx: ToolContext) => void
-  onPointerMove?: (point: Point, ctx: ToolContext) => void
-  onPointerUp?: (point: Point, ctx: ToolContext) => void
+export type ToolInstance = {
+  onPointerDown?: (ctx: ToolContext) => void
+  onPointerMove?: (ctx: ToolContext) => void
+  onPointerUp?: (ctx: ToolContext) => void
   onPointerCancel?: () => void
   renderSettings?: () => JSX.Element
   renderCanvas?: (props: ToolCanvasProps) => JSX.Element

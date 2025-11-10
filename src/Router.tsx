@@ -1,7 +1,7 @@
 import type { JSX } from "solid-js"
 import { createSignal, onCleanup, onMount } from "solid-js"
 
-export interface Route {
+export type Route = {
   path: string
   render: (
     route: { path: string; params: Record<string, string> },
