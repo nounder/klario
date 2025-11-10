@@ -1,18 +1,20 @@
 import { createSignal } from "solid-js"
 import Bangkok2025ArabicaSvg from "../assets/Bangkok2025Arabica.svg"
-import Canvas, { type Node } from "./Canvas"
-import CanvasToolbar from "./CanvasToolbar"
+import * as About from "./About.tsx"
+import * as Canvas from "./Canvas.tsx"
+import * as CanvasToolbar from "./CanvasToolbar.tsx"
 import { ImageNode } from "./nodes/index.ts"
+import * as Router from "./Router.tsx"
 import * as Tools from "./tools/index.ts"
 import type { ToolType } from "./tools/index.ts"
 
 console.log(Bangkok2025ArabicaSvg)
 
-export default function App() {
+function DrawingApp() {
   const [currentTool, setCurrentTool] = createSignal<ToolType>("StrokeTool")
 
   // Initial nodes to pass to Canvas
-  const initialNodes: Node[] = [
+  const initialNodes: Canvas.Node[] = [
     ImageNode.make({
       uri: Bangkok2025ArabicaSvg,
       bounds: {
@@ -25,7 +27,7 @@ export default function App() {
   ]
 
   // Nodes state managed by App
-  const [nodes, setNodes] = createSignal<Node[]>(initialNodes)
+  const [nodes, setNodes] = createSignal<Canvas.Node[]>(initialNodes)
 
   // Get the tool module based on current tool type
   const getTool = () => Tools[currentTool()]
@@ -39,7 +41,7 @@ export default function App() {
         width: "100vw",
       }}
     >
-      <CanvasToolbar
+      <CanvasToolbar.CanvasToolbar
         currentTool={currentTool()}
         onToolChange={(type: ToolType) => setCurrentTool(type)}
         onClearCanvas={() => {
@@ -48,7 +50,7 @@ export default function App() {
         }}
       />
 
-      <Canvas
+      <Canvas.Canvas
         nodes={nodes()}
         onChange={setNodes}
         tool={getTool()}
@@ -61,4 +63,19 @@ export default function App() {
       />
     </div>
   )
+}
+
+export default function App() {
+  const routes: Router.Route[] = [
+    {
+      path: "/",
+      render: () => <DrawingApp />,
+    },
+    {
+      path: "/about",
+      render: (route) => <About.About name={route.params.name} />,
+    },
+  ]
+
+  return <Router.Router routes={routes} />
 }

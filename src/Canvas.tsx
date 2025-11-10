@@ -12,7 +12,7 @@ export {
 
 type Point = { x: number; y: number }
 
-export default function(props: {
+export function Canvas(props: {
   nodes?: Node[]
   tool: ToolModule
   bounds?:

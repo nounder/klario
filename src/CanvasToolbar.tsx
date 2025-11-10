@@ -99,7 +99,7 @@ function ActionButton(props: {
   )
 }
 
-export default function CanvasToolbar(props: CanvasToolbarProps) {
+export function CanvasToolbar(props: CanvasToolbarProps) {
   // Get the current tool instance for rendering settings
   const currentToolInstance = createMemo(() => {
     const tool = Tools[props.currentTool]
