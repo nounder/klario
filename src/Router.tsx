@@ -3,7 +3,9 @@ import { createSignal, onCleanup, onMount } from "solid-js"
 
 export interface Route {
   path: string
-  render: (route: { path: string; params: Record<string, string> }) => JSX.Element
+  render: (
+    route: { path: string; params: Record<string, string> },
+  ) => JSX.Element
 }
 
 export function navigate(url: string) {
@@ -26,10 +28,10 @@ export function Router(props: { routes: Route[] }) {
 
   onMount(() => {
     window.addEventListener("popstate", handlePopState)
-  })
 
-  onCleanup(() => {
-    window.removeEventListener("popstate", handlePopState)
+    return () => {
+      window.removeEventListener("popstate", handlePopState)
+    }
   })
 
   const renderCurrentRoute = () => {
@@ -37,7 +39,11 @@ export function Router(props: { routes: Route[] }) {
     const matched = matchRoute(pathname)
 
     if (!matched) {
-      return <div>404 - Not Found</div>
+      return (
+        <div>
+          404 - Not Found
+        </div>
+      )
     }
 
     const params = Object.fromEntries(
@@ -47,5 +53,9 @@ export function Router(props: { routes: Route[] }) {
     return matched.render({ path: pathname, params })
   }
 
-  return <>{renderCurrentRoute()}</>
+  return (
+    <>
+      {renderCurrentRoute()}
+    </>
+  )
 }

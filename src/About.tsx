@@ -14,9 +14,17 @@ export function About(props: { name?: string }) {
         "box-sizing": "border-box",
       }}
     >
-      <h1>About klario</h1>
-      {props.name && <p>Hello, {props.name}!</p>}
-      <p>A modern drawing canvas application built with SolidJS.</p>
+      <h1>
+        About klario
+      </h1>
+      {props.name && (
+        <p>
+          Hello, {props.name}!
+        </p>
+      )}
+      <p>
+        A modern drawing canvas application built with SolidJS.
+      </p>
       <button
         onClick={() => Router.navigate("/")}
         style={{

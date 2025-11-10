@@ -2,9 +2,9 @@ import { createEffect, createMemo, createSignal, For, onMount } from "solid-js"
 import { createStore } from "solid-js/store"
 import * as Nodes from "./nodes/index.ts"
 import type { Node } from "./nodes/index.ts"
-import { simplifyStroke } from "./strokes/simplification.ts"
 import type { ToolModule } from "./tools/index.ts"
 import type { Bounds, CanvasState, StrokePoint } from "./types"
+import { calculateBoundsFromPoints, mergeBounds } from "./utils.ts"
 
 export {
   type Node,
@@ -57,8 +57,8 @@ export function Canvas(props: {
   // Internal state
   const [activeNodeId, setActiveNodeId] = createSignal<string | null>(null)
 
-  // Create tool instance internally - recreate when tool changes
-  const toolInstance = createMemo(() => props.tool.build())
+  // Tool instance from props
+  const toolInstance = createMemo(() => props.tool)
 
   let svgRef: SVGSVGElement | undefined
 
@@ -66,50 +66,6 @@ export function Canvas(props: {
   onMount(() => {
     recalculateCanvasBounds()
   })
-
-  // Helper: Calculate bounds from points with padding
-  const calculateBoundsFromPoints = (
-    points: StrokePoint[],
-    padding: number = 50,
-  ): Bounds => {
-    const xs = points.map((p: StrokePoint) => p.x)
-    const ys = points.map((p: StrokePoint) => p.y)
-
-    const minX = Math.min(...xs) - padding
-    const minY = Math.min(...ys) - padding
-    const maxX = Math.max(...xs) + padding
-    const maxY = Math.max(...ys) + padding
-
-    return {
-      x: minX,
-      y: minY,
-      width: maxX - minX,
-      height: maxY - minY,
-    }
-  }
-
-  // Helper: Merge two bounds (expand first to include second)
-  const mergeBounds = (bounds1: Bounds | null, bounds2: Bounds): Bounds => {
-    if (!bounds1) return bounds2
-
-    const newMinX = Math.min(bounds1.x, bounds2.x)
-    const newMinY = Math.min(bounds1.y, bounds2.y)
-    const newMaxX = Math.max(
-      bounds1.x + bounds1.width,
-      bounds2.x + bounds2.width,
-    )
-    const newMaxY = Math.max(
-      bounds1.y + bounds1.height,
-      bounds2.y + bounds2.height,
-    )
-
-    return {
-      x: newMinX,
-      y: newMinY,
-      width: newMaxX - newMinX,
-      height: newMaxY - newMinY,
-    }
-  }
 
   // Recalculate canvas bounds from all nodes (used on delete or initial load)
   const recalculateCanvasBounds = () => {
@@ -290,19 +246,18 @@ export function Canvas(props: {
     if (tool && "onPointerDown" in tool) {
       ;(tool as any).onPointerDown({
         point,
-        state: (instance as any).state,
-        setState: (instance as any).setState,
-        setAppStore: (_updates: any) => {
-          setCanvasState({
-            isDrawing: true,
-            activePointerId: e.pointerId,
-          })
-        },
         addNode: (node: Node) => {
           setNodes(prev => [...prev, node])
           updateCanvasBoundsForNode(node)
         },
+        deleteNodes: (nodeIds: string[]) => {
+          setNodes(prev => prev.filter(n => !nodeIds.includes(n.id)))
+        },
         nodes: nodes(),
+      })
+      setCanvasState({
+        isDrawing: true,
+        activePointerId: e.pointerId,
       })
     }
   }
@@ -333,10 +288,12 @@ export function Canvas(props: {
     if (tool && "onPointerMove" in tool) {
       ;(tool as any).onPointerMove({
         point,
-        state: (instance as any).state,
-        setState: (instance as any).setState,
-        setAppStore: (_updates: any) => {
-          // Canvas state updates would go here if needed
+        addNode: (node: Node) => {
+          setNodes(prev => [...prev, node])
+          updateCanvasBoundsForNode(node)
+        },
+        deleteNodes: (nodeIds: string[]) => {
+          setNodes(prev => prev.filter(n => !nodeIds.includes(n.id)))
         },
         nodes: nodes(),
       })
@@ -396,14 +353,6 @@ export function Canvas(props: {
         const point = e ? getCoordinates(e) : { x: 0, y: 0 }
         ;(tool as any).onPointerUp({
           point,
-          state: (instance as any).state,
-          setState: (instance as any).setState,
-          setAppStore: (_updates: any) => {
-            setCanvasState({
-              isDrawing: false,
-              activePointerId: null,
-            })
-          },
           addNode: (node: Node) => {
             setNodes(prev => [...prev, node])
             updateCanvasBoundsForNode(node)
@@ -413,8 +362,11 @@ export function Canvas(props: {
             // Recalculate bounds after deletion
             recalculateCanvasBounds()
           },
-          calculateBounds,
-          simplifyStroke,
+          nodes: nodes(),
+        })
+        setCanvasState({
+          isDrawing: false,
+          activePointerId: null,
         })
       } else {
         setCanvasState("isDrawing", false)
