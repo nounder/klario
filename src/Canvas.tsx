@@ -6,15 +6,20 @@ import { simplifyStroke } from "./strokes/simplification.ts"
 import type { ToolModule } from "./tools/index.ts"
 import type { Bounds, CanvasState, StrokePoint } from "./types"
 
+export {
+  type Node,
+}
+
 type Point = { x: number; y: number }
 
-export default function Canvas(props: {
+export default function(props: {
   nodes?: Node[]
   tool: ToolModule
   bounds?:
     | { width: number; height: number }
     | { x: number; y: number; width: number; height: number }
   rootStyle?: Record<string, string>
+  onChange?: (nodes: Node[]) => void
 }) {
   // Canvas-specific local state
   const [canvasState, setCanvasState] = createStore<CanvasState>({
@@ -26,36 +31,55 @@ export default function Canvas(props: {
     pointerPosition: null,
   })
 
-  // Internal nodes state - managed by Canvas
-  // Initialize with props.nodes if provided, otherwise empty
-  const [nodes, setNodes] = createSignal<Node[]>(props.nodes ?? [])
-  
+  // Internal nodes state - only used when props.nodes is not provided
+  const [internalNodes, setInternalNodes] = createSignal<Node[]>([])
+
+  // Use props.nodes if provided, otherwise use internal state
+  const nodes = () => props.nodes ?? internalNodes()
+  const setNodes = (updater: Node[] | ((prev: Node[]) => Node[])) => {
+    if (props.onChange) {
+      // notify parent component of changes
+      const newNodes = typeof updater === "function"
+        ? updater(nodes())
+        : updater
+      props.onChange(newNodes)
+    } else {
+      // update internal state
+      setInternalNodes(updater)
+    }
+  }
+
   // Canvas bounds as a signal for performance - updated incrementally
-  const [internalCanvasBounds, setInternalCanvasBounds] = createSignal<Bounds | null>(null)
+  const [internalCanvasBounds, setInternalCanvasBounds] = createSignal<
+    Bounds | null
+  >(null)
 
   // Internal state
   const [activeNodeId, setActiveNodeId] = createSignal<string | null>(null)
-  
+
   // Create tool instance internally - recreate when tool changes
   const toolInstance = createMemo(() => props.tool.build())
 
   let svgRef: SVGSVGElement | undefined
-  
+
   // Calculate initial bounds on mount
   onMount(() => {
     recalculateCanvasBounds()
   })
-  
+
   // Helper: Calculate bounds from points with padding
-  const calculateBoundsFromPoints = (points: StrokePoint[], padding: number = 50): Bounds => {
+  const calculateBoundsFromPoints = (
+    points: StrokePoint[],
+    padding: number = 50,
+  ): Bounds => {
     const xs = points.map((p: StrokePoint) => p.x)
     const ys = points.map((p: StrokePoint) => p.y)
-    
+
     const minX = Math.min(...xs) - padding
     const minY = Math.min(...ys) - padding
     const maxX = Math.max(...xs) + padding
     const maxY = Math.max(...ys) + padding
-    
+
     return {
       x: minX,
       y: minY,
@@ -63,16 +87,22 @@ export default function Canvas(props: {
       height: maxY - minY,
     }
   }
-  
+
   // Helper: Merge two bounds (expand first to include second)
   const mergeBounds = (bounds1: Bounds | null, bounds2: Bounds): Bounds => {
     if (!bounds1) return bounds2
-    
+
     const newMinX = Math.min(bounds1.x, bounds2.x)
     const newMinY = Math.min(bounds1.y, bounds2.y)
-    const newMaxX = Math.max(bounds1.x + bounds1.width, bounds2.x + bounds2.width)
-    const newMaxY = Math.max(bounds1.y + bounds1.height, bounds2.y + bounds2.height)
-    
+    const newMaxX = Math.max(
+      bounds1.x + bounds1.width,
+      bounds2.x + bounds2.width,
+    )
+    const newMaxY = Math.max(
+      bounds1.y + bounds1.height,
+      bounds2.y + bounds2.height,
+    )
+
     return {
       x: newMinX,
       y: newMinY,
@@ -80,31 +110,31 @@ export default function Canvas(props: {
       height: newMaxY - newMinY,
     }
   }
-  
+
   // Recalculate canvas bounds from all nodes (used on delete or initial load)
   const recalculateCanvasBounds = () => {
     const allPoints: StrokePoint[] = []
-    
+
     nodes().forEach((node) => {
       if (node.type === "StrokeNode") {
         allPoints.push(...node.stroke.points)
       }
     })
-    
+
     if (allPoints.length === 0) {
       setInternalCanvasBounds(null)
       return
     }
-    
+
     const padding = 50
     const xs = allPoints.map(p => p.x)
     const ys = allPoints.map(p => p.y)
-    
+
     const minX = Math.min(...xs) - padding
     const minY = Math.min(...ys) - padding
     const maxX = Math.max(...xs) + padding
     const maxY = Math.max(...ys) + padding
-    
+
     setInternalCanvasBounds({
       x: minX,
       y: minY,
@@ -112,18 +142,18 @@ export default function Canvas(props: {
       height: maxY - minY,
     })
   }
-  
+
   // Update canvas bounds incrementally when adding a node (performance optimization)
   const updateCanvasBoundsForNode = (node: Node) => {
     if (node.type !== "StrokeNode") return
-    
+
     const points = node.stroke.points
     if (points.length === 0) return
-    
+
     const nodeBounds = calculateBoundsFromPoints(points, 50)
     const currentBounds = internalCanvasBounds()
     const newBounds = mergeBounds(currentBounds, nodeBounds)
-    
+
     setInternalCanvasBounds(newBounds)
   }
   // Update viewBox when bounds prop changes or svgRef is set
@@ -258,7 +288,7 @@ export default function Canvas(props: {
 
     // Call the tool's onPointerDown handler with appropriate helpers
     if (tool && "onPointerDown" in tool) {
-      (tool as any).onPointerDown({
+      ;(tool as any).onPointerDown({
         point,
         state: (instance as any).state,
         setState: (instance as any).setState,
@@ -289,7 +319,9 @@ export default function Canvas(props: {
       setCanvasState("pointerPosition", { x: point.x, y: point.y })
     }
 
-    if (!canvasState.isDrawing || canvasState.activePointerId !== e.pointerId) return
+    if (!canvasState.isDrawing || canvasState.activePointerId !== e.pointerId) {
+      return
+    }
     const instance = toolInstance()
     if (!instance) return
 
@@ -299,7 +331,7 @@ export default function Canvas(props: {
 
     // Call the tool's onPointerMove handler if it exists
     if (tool && "onPointerMove" in tool) {
-      (tool as any).onPointerMove({
+      ;(tool as any).onPointerMove({
         point,
         state: (instance as any).state,
         setState: (instance as any).setState,
@@ -405,7 +437,7 @@ export default function Canvas(props: {
 
       // Call the tool's onPointerCancel handler if it exists
       if (tool && "onPointerCancel" in tool) {
-        (tool as any).onPointerCancel({
+        ;(tool as any).onPointerCancel({
           setState: (instance as any).setState,
           setAppStore: (_updates: any) => {
             setCanvasState({
@@ -466,14 +498,17 @@ export default function Canvas(props: {
   // Get canvas bounds including current tool path (for panning calculations)
   const canvasBounds = createMemo((): Bounds | null => {
     const bounds = internalCanvasBounds()
-    
+
     // Include current drawing path in bounds calculation
     const instance = toolInstance() as any
     if (instance?.state?.currentPath?.length > 0) {
-      const pathBounds = calculateBoundsFromPoints(instance.state.currentPath, 50)
+      const pathBounds = calculateBoundsFromPoints(
+        instance.state.currentPath,
+        50,
+      )
       return mergeBounds(bounds, pathBounds)
     }
-    
+
     return bounds
   })
 
@@ -483,7 +518,8 @@ export default function Canvas(props: {
     if (!bounds) return false
 
     return (
-      bounds.width > canvasState.viewBox.width || bounds.height > canvasState.viewBox.height
+      bounds.width > canvasState.viewBox.width
+      || bounds.height > canvasState.viewBox.height
     )
   })
 

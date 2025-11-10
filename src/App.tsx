@@ -1,17 +1,16 @@
 import { createSignal } from "solid-js"
 import Bangkok2025ArabicaSvg from "../assets/Bangkok2025Arabica.svg"
-import Canvas from "./Canvas"
+import Canvas, { type Node } from "./Canvas"
 import CanvasToolbar from "./CanvasToolbar"
 import { ImageNode } from "./nodes/index.ts"
 import * as Tools from "./tools/index.ts"
 import type { ToolType } from "./tools/index.ts"
-import type { Node } from "./nodes/index.ts"
 
 console.log(Bangkok2025ArabicaSvg)
 
 export default function App() {
   const [currentTool, setCurrentTool] = createSignal<ToolType>("StrokeTool")
-  
+
   // Initial nodes to pass to Canvas
   const initialNodes: Node[] = [
     ImageNode.make({
@@ -25,13 +24,11 @@ export default function App() {
     }),
   ]
 
-  // Canvas ref for clearing
-  let canvasRef: any
+  // Nodes state managed by App
+  const [nodes, setNodes] = createSignal<Node[]>(initialNodes)
 
   // Get the tool module based on current tool type
-  const getTool = () => {
-    return Tools[currentTool()]
-  }
+  const getTool = () => Tools[currentTool()]
 
   return (
     <div
@@ -46,15 +43,14 @@ export default function App() {
         currentTool={currentTool()}
         onToolChange={(type: ToolType) => setCurrentTool(type)}
         onClearCanvas={() => {
-          // Reset Canvas by passing empty nodes
-          // Since Canvas syncs on prop change, we can trigger a re-render
-          window.location.reload() // Temporary - better solution would be to expose clearNodes from Canvas
+          // Reset Canvas by resetting nodes to initial state
+          setNodes(initialNodes)
         }}
       />
 
       <Canvas
-        ref={canvasRef}
-        nodes={initialNodes}
+        nodes={nodes()}
+        onChange={setNodes}
         tool={getTool()}
         bounds={{
           x: 0,
