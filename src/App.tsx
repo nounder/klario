@@ -1,11 +1,25 @@
 import { createStore } from "solid-js/store"
+import Bangkok2025ArabicaSvg from "../assets/Bangkok2025Arabica.svg"
 import Canvas from "./Canvas"
 import CanvasToolbar from "./CanvasToolbar"
+import { ImageNode } from "./nodes/index.ts"
 import type { AppState } from "./types"
+
+console.log(Bangkok2025ArabicaSvg)
 
 export default function App() {
   const [store, setStore] = createStore<AppState>({
-    nodes: [],
+    nodes: [
+      ImageNode.make({
+        uri: Bangkok2025ArabicaSvg,
+        bounds: {
+          x: 0,
+          y: 0,
+          width: 300,
+          height: 300,
+        },
+      }),
+    ],
     currentTool: "StrokeTool",
     currentToolInstance: null,
     isDrawing: false,
@@ -27,8 +41,21 @@ export default function App() {
         width: "100vw",
       }}
     >
-      <CanvasToolbar store={store} setStore={setStore} />
-      <Canvas store={store} setStore={setStore} />
+      <CanvasToolbar
+        store={store}
+        setStore={setStore}
+      />
+
+      <Canvas
+        store={store}
+        setStore={setStore}
+        bounds={{
+          x: 0,
+          y: 0,
+          width: 300,
+          height: 300,
+        }}
+      />
     </div>
   )
 }

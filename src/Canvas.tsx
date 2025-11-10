@@ -1,4 +1,4 @@
-import { createEffect, createMemo, For } from "solid-js"
+import { createEffect, createMemo, For, onMount } from "solid-js"
 import type { SetStoreFunction } from "solid-js/store"
 import * as Nodes from "./nodes/index.ts"
 import type { Node } from "./nodes/index.ts"
@@ -11,11 +11,49 @@ type Point = { x: number; y: number }
 export default function Canvas(props: {
   store: AppState
   setStore: SetStoreFunction<AppState>
+  bounds?:
+    | { width: number; height: number }
+    | { x: number; y: number; width: number; height: number }
 }) {
   const store = props.store
   const setStore = props.setStore
 
   let svgRef: SVGSVGElement | undefined
+
+  // Update viewBox when bounds prop changes or svgRef is set
+  createEffect(() => {
+    if (props.bounds) {
+      setStore("viewBox", {
+        x: "x" in props.bounds ? props.bounds.x : 0,
+        y: "y" in props.bounds ? props.bounds.y : 0,
+        width: props.bounds.width,
+        height: props.bounds.height,
+      })
+    } else if (svgRef) {
+      const rect = svgRef.getBoundingClientRect()
+      if (rect.width > 0 && rect.height > 0) {
+        setStore("viewBox", {
+          x: 0,
+          y: 0,
+          width: rect.width,
+          height: rect.height,
+        })
+      }
+    }
+  })
+
+  // Set up event listeners on mount
+  onMount(() => {
+    window.addEventListener("keydown", handleKeyDown)
+    window.addEventListener("keyup", handleKeyUp)
+    window.addEventListener("resize", updateViewBox)
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+      window.removeEventListener("keyup", handleKeyUp)
+      window.removeEventListener("resize", updateViewBox)
+    }
+  })
 
   // Get screen/client coordinates for panning
   const getScreenCoordinates = (e: PointerEvent): Point => {
@@ -355,6 +393,9 @@ export default function Canvas(props: {
   // Update viewBox based on current SVG size
   const updateViewBox = () => {
     if (!svgRef) return
+    // Don't auto-update if bounds prop is provided
+    if (props.bounds) return
+    
     const rect = svgRef.getBoundingClientRect()
     setStore("viewBox", (vb) => ({
       ...vb,
@@ -439,32 +480,7 @@ export default function Canvas(props: {
     }
   }
 
-  // Set up event listeners
-  const setupEventListeners = () => {
-    window.addEventListener("keydown", handleKeyDown)
-    window.addEventListener("keyup", handleKeyUp)
-    window.addEventListener("resize", updateViewBox)
-  }
 
-  // Initialize on mount
-  const initializeViewBox = (el: SVGSVGElement | undefined) => {
-    if (!el) return
-    svgRef = el
-    setupEventListeners()
-
-    setTimeout(() => {
-      if (!svgRef) return
-      const rect = svgRef.getBoundingClientRect()
-      if (rect.width > 0 && rect.height > 0) {
-        setStore("viewBox", {
-          x: 0,
-          y: 0,
-          width: rect.width,
-          height: rect.height,
-        })
-      }
-    }, 0)
-  }
 
   return (
     <div
@@ -475,7 +491,7 @@ export default function Canvas(props: {
       }}
     >
       <svg
-        ref={initializeViewBox}
+        ref={svgRef}
         width="100%"
         height="100%"
         viewBox={`${store.viewBox.x} ${store.viewBox.y} ${store.viewBox.width} ${store.viewBox.height}`}
