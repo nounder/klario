@@ -13,7 +13,7 @@ function ToolSelector(props: {
   onToolChange: (type: ToolType) => void
 }) {
   const tools: Array<{ type: ToolType; label: string }> = [
-    { type: "StrokeTool", label: "Stroke" },
+    { type: "MarkerStrokeTool", label: "Marker" },
     { type: "DrawEraserTool", label: "Draw Eraser" },
     { type: "NodeEraserTool", label: "Node Eraser" },
     { type: "ImageTool", label: "Image" },

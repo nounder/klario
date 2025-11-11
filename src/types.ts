@@ -17,6 +17,11 @@ export type StrokePoint = {
   twist?: number
 }
 
+export type StrokeOptions = {
+  width: number
+  color: string
+}
+
 export type ToolCanvasProps = {
   pointerPosition: Point | null
 }
@@ -28,15 +33,7 @@ export type Bounds = {
   height: number
 }
 
-// Stroke types (discriminated union)
-export type PenStroke = {
-  type: "PenStroke"
-  points: StrokePoint[]
-  color: string
-  width: number
-  bounds: Bounds
-}
-
+// Stroke type
 export type MarkerStroke = {
   type: "MarkerStroke"
   points: StrokePoint[]
@@ -45,10 +42,6 @@ export type MarkerStroke = {
   bounds: Bounds
 }
 
-export type Stroke =
-  | PenStroke
-  | MarkerStroke
-
 export type ViewBox = {
   x: number
   y: number
@@ -56,9 +49,6 @@ export type ViewBox = {
   height: number
 }
 
-export type StrokeType =
-  | "PenStroke"
-  | "MarkerStroke"
 
 // Application state (shared across components)
 export type AppState = {

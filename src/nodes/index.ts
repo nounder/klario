@@ -1,4 +1,4 @@
-import type { Bounds, Stroke, StrokePoint } from "../types"
+import type { Bounds, StrokePoint, MarkerStroke } from "../types"
 
 export type NodeBase = {
   id: string
@@ -8,9 +8,9 @@ export type NodeBase = {
   locked: boolean
 }
 
-export type StrokeNode = NodeBase & {
-  type: "StrokeNode"
-  stroke: Omit<Stroke, "bounds">
+export type MarkerStrokeNode = NodeBase & {
+  type: "MarkerStrokeNode"
+  stroke: Omit<MarkerStroke, "bounds">
 }
 
 export type ImageNode = NodeBase & {
@@ -37,14 +37,14 @@ export type DrawEraserNode = NodeBase & {
 }
 
 export type Node =
-  | StrokeNode
+  | MarkerStrokeNode
   | ImageNode
   | GroupNode
   | TextNode
   | DrawEraserNode
 
 export type NodeType =
-  | "StrokeNode"
+  | "MarkerStrokeNode"
   | "ImageNode"
   | "GroupNode"
   | "TextNode"
@@ -53,5 +53,5 @@ export type NodeType =
 export * as DrawEraserNode from "./DrawEraserNode.tsx"
 export * as GroupNode from "./GroupNode.tsx"
 export * as ImageNode from "./ImageNode.tsx"
-export * as StrokeNode from "./StrokeNode.tsx"
+export * as MarkerStrokeNode from "./MarkerStrokeNode.tsx"
 export * as TextNode from "./TextNode.tsx"

@@ -8,10 +8,8 @@ import * as Router from "./Router.tsx"
 import * as Tools from "./tools/index.ts"
 import type { ToolType } from "./tools/index.ts"
 
-console.log(Bangkok2025ArabicaSvg)
-
 function DrawingApp() {
-  const [currentTool, setCurrentTool] = createSignal<ToolType>("StrokeTool")
+  const [currentTool, setCurrentTool] = createSignal<ToolType>("MarkerStrokeTool")
 
   // Initial nodes to pass to Canvas
   const initialNodes: Canvas.Node[] = [
@@ -26,10 +24,7 @@ function DrawingApp() {
     }),
   ]
 
-  // Nodes state managed by App
   const [nodes, setNodes] = createSignal<Canvas.Node[]>(initialNodes)
-
-  // Get the tool module based on current tool type
   const getTool = () => Tools[currentTool()]
 
   return (

@@ -2,21 +2,19 @@ import { For } from "solid-js"
 import { createStore } from "solid-js/store"
 
 import type { Node } from "../nodes/index.ts"
-import * as StrokeNode from "../nodes/StrokeNode.tsx"
+import * as MarkerStrokeNode from "../nodes/MarkerStrokeNode.tsx"
 import { simplifyStroke } from "../simplification.ts"
-import type { StrokeType } from "../strokes/index.ts"
 import type { StrokePoint } from "../types.ts"
 import * as Unique from "../Unique.ts"
 import { calculateBoundsFromPoints } from "../utils.ts"
 import * as Tool from "./Tool.ts"
 
-export const NodeType = StrokeNode.Type
+export const NodeType = MarkerStrokeNode.Type
 
-export const StrokeTool = Tool.build(() => {
+export const MarkerStrokeTool = Tool.build(() => {
   const [state, setState] = createStore({
-    strokeType: "MarkerStroke" as StrokeType,
     color: "#000000",
-    width: 6,
+    width: 8,
     currentPath: [] as StrokePoint[],
   })
 
@@ -31,13 +29,6 @@ export const StrokeTool = Tool.build(() => {
     "#FFA500",
   ]
 
-  const brushTypes: Array<
-    { type: StrokeType; label: string }
-  > = [
-    { type: "PenStroke", label: "Pen" },
-    { type: "MarkerStroke", label: "Marker" },
-  ]
-
   return {
     onPointerDown: (ctx) => {
       setState("currentPath", [ctx.point])
@@ -47,20 +38,18 @@ export const StrokeTool = Tool.build(() => {
     },
     onPointerUp: (ctx) => {
       if (state.currentPath.length > 0) {
-        // Apply Douglas-Peucker simplification
-        const epsilonMultiplier = state.strokeType === "PenStroke" ? 0.3 : 0.5
-        const epsilon = epsilonMultiplier * Math.max(1, state.width / 10)
+        const epsilon = 0.5 * Math.max(1, state.width / 10)
         const simplifiedPoints = simplifyStroke(state.currentPath, epsilon)
         const bounds = calculateBoundsFromPoints(simplifiedPoints, state.width)
 
         const newNode: Node = {
           id: Unique.token(16),
-          type: "StrokeNode",
+          type: "MarkerStrokeNode",
           parent: null,
           bounds,
           locked: false,
           stroke: {
-            type: state.strokeType,
+            type: "MarkerStroke",
             points: simplifiedPoints,
             color: state.color,
             width: state.width,
@@ -76,7 +65,6 @@ export const StrokeTool = Tool.build(() => {
     },
     renderSettings: () => (
       <>
-        {/* Color Picker */}
         <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
           <For each={colors}>
             {(c) => (
@@ -103,50 +91,11 @@ export const StrokeTool = Tool.build(() => {
           </For>
         </div>
 
-        {/* Brush Type Selector */}
-        <div style={{ display: "flex", gap: "8px" }}>
-          <For each={brushTypes}>
-            {(brush) => (
-              <button
-                onClick={() => setState("strokeType", brush.type)}
-                style={{
-                  padding: "8px 16px",
-                  background: state.strokeType === brush.type
-                    ? "rgba(59, 130, 246, 0.9)"
-                    : "rgba(255, 255, 255, 0.5)",
-                  color: state.strokeType === brush.type
-                    ? "white"
-                    : "rgba(0, 0, 0, 0.7)",
-                  border: state.strokeType === brush.type
-                    ? "2px solid rgba(59, 130, 246, 1)"
-                    : "2px solid rgba(255, 255, 255, 0.3)",
-                  "border-radius": "10px",
-                  cursor: "pointer",
-                  "font-weight": "600",
-                  "font-size": "13px",
-                  "letter-spacing": "0.5px",
-                  "box-shadow": state.strokeType === brush.type
-                    ? "0 4px 16px rgba(59, 130, 246, 0.3)"
-                    : "0 2px 8px rgba(0, 0, 0, 0.1)",
-                  transition: "all 0.2s ease",
-                  transform: state.strokeType === brush.type
-                    ? "scale(1.05)"
-                    : "scale(1)",
-                }}
-                title={brush.label}
-              >
-                {brush.label}
-              </button>
-            )}
-          </For>
-        </div>
-
-        {/* Width Slider */}
         <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
           <input
             type="range"
-            min={1}
-            max={20}
+            min={3}
+            max={25}
             value={state.width}
             onInput={(e) => setState("width", parseInt(e.currentTarget.value))}
             style={{
@@ -179,26 +128,26 @@ export const StrokeTool = Tool.build(() => {
     renderCanvas: (_props) => {
       return (
         <g style={{ "will-change": "transform" }}>
-          {/* Render temporary stroke preview while drawing */}
           {state.currentPath.length > 0 && (() => {
             const node = {
               id: "temp",
-              type: "StrokeNode" as const,
+              type: "MarkerStrokeNode" as const,
               parent: null,
               bounds: { x: 0, y: 0, width: 0, height: 0 },
               locked: false,
               stroke: {
-                type: state.strokeType,
+                type: "MarkerStroke" as const,
                 points: state.currentPath,
                 width: state.width,
                 color: state.color,
               },
             }
 
-            return StrokeNode.render(node)
+            return MarkerStrokeNode.render(node)
           })()}
         </g>
       )
     },
   }
 })
+

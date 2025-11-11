@@ -8,11 +8,11 @@ export {
   ImageTool,
 } from "./ImageTool.tsx"
 export {
+  MarkerStrokeTool,
+} from "./MarkerStrokeTool.tsx"
+export {
   NodeEraserTool,
 } from "./NodeEraserTool.tsx"
-export {
-  StrokeTool,
-} from "./StrokeTool.tsx"
 export {
   TextTool,
 } from "./TextTool.tsx"
@@ -21,7 +21,7 @@ import type { ToolInstance } from "./Tool.ts"
 
 // Tool type names
 export type ToolType =
-  | "StrokeTool"
+  | "MarkerStrokeTool"
   | "ImageTool"
   | "TextTool"
   | "GroupTool"
