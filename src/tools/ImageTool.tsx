@@ -7,7 +7,7 @@ import * as Tool from "./Tool.ts"
 
 export const NodeType = ImageNode.Type
 
-export const ImageTool = Tool.build(() => {
+export const make = Tool.build(() => {
   const [state, setState] = createStore({
     uri: "",
     width: 200,

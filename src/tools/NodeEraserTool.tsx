@@ -200,7 +200,7 @@ function lineSegmentsIntersect(
   return lambda >= 0 && lambda <= 1 && gamma >= 0 && gamma <= 1
 }
 
-export const NodeEraserTool = Tool.build(() => {
+export const make = Tool.build(() => {
   const [state, setState] = createStore({
     width: 20,
     currentPath: [] as StrokePoint[],

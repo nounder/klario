@@ -8,7 +8,7 @@ import * as Tool from "./Tool.ts"
 
 export const NodeType = TextNode.Type
 
-export const TextTool = Tool.build(() => {
+export const make = Tool.build(() => {
   const [state, setState] = createStore({
     fontSize: 24,
     color: "#000000",

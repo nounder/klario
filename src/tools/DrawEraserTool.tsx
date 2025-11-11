@@ -10,7 +10,7 @@ import * as Tool from "./Tool.ts"
 
 export const NodeType = DrawEraserNode.Type
 
-export const DrawEraserTool = Tool.build(() => {
+export const make = Tool.build(() => {
   const [state, setState] = createStore({
     width: 20,
     currentPath: [] as StrokePoint[],

@@ -1,62 +1,39 @@
 import { createMemo, For } from "solid-js"
-import * as Tools from "./tools/index.ts"
-import type { ToolType } from "./tools/index.ts"
+import type { ToolType, ToolInstance } from "./tools/index.ts"
 
-type CanvasToolbarProps = {
-  currentTool: ToolType
-  onToolChange: (type: ToolType) => void
-  onClearCanvas?: () => void
-}
-
-function ToolSelector(props: {
-  currentType: ToolType
-  onToolChange: (type: ToolType) => void
+function ToolButton(props: {
+  type: ToolType
+  label: string
+  isActive: boolean
+  onClick: () => void
 }) {
-  const tools: Array<{ type: ToolType; label: string }> = [
-    { type: "MarkerStrokeTool", label: "Marker" },
-    { type: "DrawEraserTool", label: "Draw Eraser" },
-    { type: "NodeEraserTool", label: "Node Eraser" },
-    { type: "ImageTool", label: "Image" },
-    { type: "TextTool", label: "Text" },
-  ]
-
   return (
-    <div style={{ display: "flex", gap: "8px" }}>
-      <For each={tools}>
-        {(tool) => (
-          <button
-            onClick={() => props.onToolChange(tool.type)}
-            style={{
-              padding: "8px 16px",
-              background: props.currentType === tool.type
-                ? "rgba(59, 130, 246, 0.9)"
-                : "rgba(255, 255, 255, 0.5)",
-              color: props.currentType === tool.type
-                ? "white"
-                : "rgba(0, 0, 0, 0.7)",
-              border: props.currentType === tool.type
-                ? "2px solid rgba(59, 130, 246, 1)"
-                : "2px solid rgba(255, 255, 255, 0.3)",
-              "border-radius": "10px",
-              cursor: "pointer",
-              "font-weight": "600",
-              "font-size": "13px",
-              "letter-spacing": "0.5px",
-              "box-shadow": props.currentType === tool.type
-                ? "0 4px 16px rgba(59, 130, 246, 0.3)"
-                : "0 2px 8px rgba(0, 0, 0, 0.1)",
-              transition: "all 0.2s ease",
-              transform: props.currentType === tool.type
-                ? "scale(1.05)"
-                : "scale(1)",
-            }}
-            title={tool.label}
-          >
-            {tool.label}
-          </button>
-        )}
-      </For>
-    </div>
+    <button
+      onClick={props.onClick}
+      style={{
+        padding: "8px 16px",
+        background: props.isActive
+          ? "rgba(59, 130, 246, 0.9)"
+          : "rgba(255, 255, 255, 0.5)",
+        color: props.isActive ? "white" : "rgba(0, 0, 0, 0.7)",
+        border: props.isActive
+          ? "2px solid rgba(59, 130, 246, 1)"
+          : "2px solid rgba(255, 255, 255, 0.3)",
+        "border-radius": "10px",
+        cursor: "pointer",
+        "font-weight": "600",
+        "font-size": "13px",
+        "letter-spacing": "0.5px",
+        "box-shadow": props.isActive
+          ? "0 4px 16px rgba(59, 130, 246, 0.3)"
+          : "0 2px 8px rgba(0, 0, 0, 0.1)",
+        transition: "all 0.2s ease",
+        transform: props.isActive ? "scale(1.05)" : "scale(1)",
+      }}
+      title={props.label}
+    >
+      {props.label}
+    </button>
   )
 }
 
@@ -99,10 +76,16 @@ function ActionButton(props: {
   )
 }
 
-export function CanvasToolbar(props: CanvasToolbarProps) {
+export function CanvasToolbar(props: {
+  toolList: Array<{ type: ToolType; label: string }>
+  tools: Record<ToolType, ToolInstance>
+  currentTool: ToolType
+  onToolChange: (type: ToolType) => void
+  onClearCanvas?: () => void
+}) {
   // Get the current tool instance for rendering settings
   const currentToolInstance = createMemo(() => {
-    return Tools[props.currentTool]
+    return props.tools[props.currentTool]
   })
 
   return (
@@ -124,10 +107,18 @@ export function CanvasToolbar(props: CanvasToolbarProps) {
         "z-index": 10,
       }}
     >
-      <ToolSelector
-        currentType={props.currentTool}
-        onToolChange={props.onToolChange}
-      />
+      <div style={{ display: "flex", gap: "8px" }}>
+        <For each={props.toolList}>
+          {(tool) => (
+            <ToolButton
+              type={tool.type}
+              label={tool.label}
+              isActive={props.currentTool === tool.type}
+              onClick={() => props.onToolChange(tool.type)}
+            />
+          )}
+        </For>
+      </div>
 
       {/* Render tool-specific settings */}
       {currentToolInstance()?.renderSettings?.()}

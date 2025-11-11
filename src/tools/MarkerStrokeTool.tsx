@@ -1,6 +1,5 @@
 import { For } from "solid-js"
 import { createStore } from "solid-js/store"
-
 import type { Node } from "../nodes/index.ts"
 import * as MarkerStrokeNode from "../nodes/MarkerStrokeNode.tsx"
 import { simplifyStroke } from "../simplification.ts"
@@ -9,25 +8,31 @@ import * as Unique from "../Unique.ts"
 import { calculateBoundsFromPoints } from "../utils.ts"
 import * as Tool from "./Tool.ts"
 
+const DefaultColors = [
+  "#000000",
+  "#FF0000",
+  "#00FF00",
+  "#0000FF",
+  "#FFFF00",
+  "#FF00FF",
+  "#00FFFF",
+  "#FFA500",
+]
+
 export const NodeType = MarkerStrokeNode.Type
 
-export const MarkerStrokeTool = Tool.build(() => {
+export const make = Tool.build((options?: {
+  colors?: typeof DefaultColors
+  epsilon?: number
+}) => {
   const [state, setState] = createStore({
     color: "#000000",
     width: 8,
     currentPath: [] as StrokePoint[],
   })
 
-  const colors = [
-    "#000000",
-    "#FF0000",
-    "#00FF00",
-    "#0000FF",
-    "#FFFF00",
-    "#FF00FF",
-    "#00FFFF",
-    "#FFA500",
-  ]
+  const colors = options?.colors ?? DefaultColors
+  const epsilon = options?.epsilon ?? 0.5
 
   return {
     onPointerDown: (ctx) => {
@@ -38,9 +43,19 @@ export const MarkerStrokeTool = Tool.build(() => {
     },
     onPointerUp: (ctx) => {
       if (state.currentPath.length > 0) {
-        const epsilon = 0.5 * Math.max(1, state.width / 10)
-        const simplifiedPoints = simplifyStroke(state.currentPath, epsilon)
-        const bounds = calculateBoundsFromPoints(simplifiedPoints, state.width)
+        const epsilonValue = epsilon * Math.max(1, state.width / 10)
+        const simplifiedPoints = epsilon > 0
+          ? simplifyStroke(state.currentPath, epsilonValue)
+          : state.currentPath
+        if (epsilon > 0) {
+          console.debug(
+            `Simplification: ${state.currentPath.length} → ${simplifiedPoints.length} points (epsilon: ${epsilonValue.toFixed(2)})`,
+          )
+        }
+        const bounds = calculateBoundsFromPoints(
+          simplifiedPoints,
+          state.width,
+        )
 
         const newNode: Node = {
           id: Unique.token(16),
@@ -65,7 +80,9 @@ export const MarkerStrokeTool = Tool.build(() => {
     },
     renderSettings: () => (
       <>
-        <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
+        <div
+          style={{ display: "flex", gap: "12px", "align-items": "center" }}
+        >
           <For each={colors}>
             {(c) => (
               <button
@@ -91,7 +108,9 @@ export const MarkerStrokeTool = Tool.build(() => {
           </For>
         </div>
 
-        <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
+        <div
+          style={{ display: "flex", gap: "12px", "align-items": "center" }}
+        >
           <input
             type="range"
             min={3}
@@ -150,4 +169,3 @@ export const MarkerStrokeTool = Tool.build(() => {
     },
   }
 })
-

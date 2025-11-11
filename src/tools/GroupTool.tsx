@@ -5,7 +5,7 @@ import * as Tool from "./Tool.ts"
 
 export const NodeType = GroupNode.Type
 
-export const GroupTool = Tool.build(() => {
+export const make = Tool.build(() => {
   const [state, setState] = createStore({
     selectedNodes: [] as Node[],
   })

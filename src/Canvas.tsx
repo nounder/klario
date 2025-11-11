@@ -1,4 +1,11 @@
-import { createEffect, createMemo, createSignal, For, onMount } from "solid-js"
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  For,
+  type JSX,
+  onMount,
+} from "solid-js"
 import { createStore } from "solid-js/store"
 import * as Nodes from "./nodes/index.ts"
 import type { Node } from "./nodes/index.ts"
@@ -20,6 +27,7 @@ export function Canvas(props: {
     | { x: number; y: number; width: number; height: number }
   rootStyle?: Record<string, string>
   onChange?: (nodes: Node[]) => void
+  children?: JSX.Element
 }) {
   // Canvas-specific local state
   const [canvasState, setCanvasState] = createStore<CanvasState>({
@@ -72,7 +80,7 @@ export function Canvas(props: {
     const allPoints: StrokePoint[] = []
 
     nodes().forEach((node) => {
-      if (node.type === "StrokeNode") {
+      if ("stroke" in node) {
         allPoints.push(...node.stroke.points)
       }
     })
@@ -101,7 +109,7 @@ export function Canvas(props: {
 
   // Update canvas bounds incrementally when adding a node (performance optimization)
   const updateCanvasBoundsForNode = (node: Node) => {
-    if (node.type !== "StrokeNode") return
+    if (!("stroke" in node)) return
 
     const points = node.stroke.points
     if (points.length === 0) return

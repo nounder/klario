@@ -1,23 +1,14 @@
-export {
-  DrawEraserTool,
-} from "./DrawEraserTool.tsx"
-export {
-  GroupTool,
-} from "./GroupTool.tsx"
-export {
-  ImageTool,
-} from "./ImageTool.tsx"
-export {
-  MarkerStrokeTool,
-} from "./MarkerStrokeTool.tsx"
-export {
-  NodeEraserTool,
-} from "./NodeEraserTool.tsx"
-export {
-  TextTool,
-} from "./TextTool.tsx"
+export * as DrawEraserTool from "./DrawEraserTool.tsx"
+export * as GroupTool from "./GroupTool.tsx"
+export * as ImageTool from "./ImageTool.tsx"
+export * as MarkerStrokeTool from "./MarkerStrokeTool.tsx"
+export * as NodeEraserTool from "./NodeEraserTool.tsx"
+export * as TextTool from "./TextTool.tsx"
 
 import type { ToolInstance } from "./Tool.ts"
+
+// Export ToolInstance for use in other files
+export type { ToolInstance } from "./Tool.ts"
 
 // Tool type names
 export type ToolType =

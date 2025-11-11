@@ -48,6 +48,8 @@ export type ToolInstance = {
  * })
  * ```
  */
-export function build(factory: () => ToolInstance): ToolInstance {
-  return factory()
+export function build<T extends any[] = []>(
+  factory: (...args: T) => ToolInstance
+): (...args: T) => ToolInstance {
+  return factory
 }
