@@ -1,5 +1,6 @@
 import { For } from "solid-js"
 import { createStore } from "solid-js/store"
+import CollapsibleSetting from "../CollapsibleSetting.tsx"
 import type { Node } from "../nodes/index.ts"
 import * as MarkerStrokeNode from "../nodes/MarkerStrokeNode.tsx"
 import { simplifyStroke } from "../simplification.ts"
@@ -83,103 +84,144 @@ export const make = Tool.build((options?: {
     renderSettings: () => (
       <>
         <div
-          style={{ display: "flex", gap: "12px", "align-items": "center" }}
+          style={{
+            display: "grid",
+            "grid-template-columns": "1fr 1fr",
+            gap: "8px",
+            width: "100%",
+          }}
         >
           <For each={colors}>
-            {(c) => (
-              <button
-                onClick={() => setState("color", c)}
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  border: state.color === c
-                    ? "3px solid rgba(0, 0, 0, 0.6)"
-                    : "2px solid rgba(255, 255, 255, 0.3)",
-                  background: c,
-                  cursor: "pointer",
-                  "border-radius": "12px",
-                  "box-shadow": state.color === c
-                    ? "0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.5)"
-                    : "0 2px 8px rgba(0, 0, 0, 0.1)",
-                  transition: "all 0.2s ease",
-                  transform: state.color === c ? "scale(1.1)" : "scale(1)",
-                }}
-                title={c}
-              />
-            )}
+            {(c, i) => {
+              // Generate consistent random rotation based on index
+              const baseRotation = (i() * 7 % 13) - 6 // Range: -6 to 6 degrees
+              let buttonRef: HTMLButtonElement | undefined
+
+              return (
+                <button
+                  ref={buttonRef}
+                  onClick={() => setState("color", c)}
+                  onMouseEnter={(e) => {
+                    if (state.color !== c) {
+                      e.currentTarget.style.transform =
+                        `scale(1.2) rotate(${baseRotation}deg)`
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (state.color !== c) {
+                      e.currentTarget.style.transform =
+                        `scale(1) rotate(${baseRotation}deg)`
+                    }
+                  }}
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    border: state.color === c
+                      ? "3px solid rgba(0, 0, 0, 0.6)"
+                      : "2px solid rgba(255, 255, 255, 0.3)",
+                    background: c,
+                    cursor: "pointer",
+                    "border-radius": "8px",
+                    "box-shadow": state.color === c
+                      ? "0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.5)"
+                      : "0 2px 8px rgba(0, 0, 0, 0.1)",
+                    transition: "all 0.2s ease",
+                    transform: state.color === c
+                      ? `scale(1.1) rotate(${baseRotation}deg)`
+                      : `scale(1) rotate(${baseRotation}deg)`,
+                  }}
+                  title={c}
+                />
+              )
+            }}
           </For>
         </div>
 
-        <div
-          style={{ display: "flex", gap: "12px", "align-items": "center" }}
-        >
-          <input
-            type="range"
-            min={3}
-            max={25}
-            value={state.width}
-            onInput={(e) => setState("width", parseInt(e.currentTarget.value))}
+        <CollapsibleSetting icon="✏️" title="Width Settings">
+          <div
             style={{
-              width: "140px",
-              height: "6px",
-              background: "rgba(255, 255, 255, 0.3)",
-              "border-radius": "3px",
-              outline: "none",
-              appearance: "none",
-              "-webkit-appearance": "none",
-            }}
-          />
-          <span
-            style={{
-              "min-width": "40px",
-              "font-weight": "600",
-              color: "rgba(0, 0, 0, 0.7)",
-              "font-size": "13px",
-              background: "rgba(255, 255, 255, 0.5)",
-              padding: "4px 8px",
-              "border-radius": "8px",
-              border: "1px solid rgba(255, 255, 255, 0.3)",
+              display: "flex",
+              "flex-direction": "column",
+              gap: "8px",
+              width: "100%",
+              "align-items": "center",
             }}
           >
-            {state.width}px
-          </span>
-        </div>
+            <input
+              type="range"
+              min={3}
+              max={25}
+              value={state.width}
+              onInput={(e) =>
+                setState("width", parseInt(e.currentTarget.value))}
+              style={{
+                width: "100%",
+                height: "6px",
+                background: "rgba(255, 255, 255, 0.3)",
+                "border-radius": "3px",
+                outline: "none",
+                appearance: "none",
+                "-webkit-appearance": "none",
+              }}
+            />
+            <span
+              style={{
+                "font-weight": "600",
+                color: "rgba(0, 0, 0, 0.7)",
+                "font-size": "11px",
+                background: "rgba(255, 255, 255, 0.5)",
+                padding: "2px 6px",
+                "border-radius": "6px",
+                border: "1px solid rgba(255, 255, 255, 0.3)",
+              }}
+            >
+              {state.width}px
+            </span>
+          </div>
+        </CollapsibleSetting>
 
-        <div
-          style={{ display: "flex", gap: "12px", "align-items": "center" }}
-        >
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={state.opacity * 100}
-            onInput={(e) =>
-              setState("opacity", parseInt(e.currentTarget.value) / 100)}
+        <CollapsibleSetting icon="💧" title="Opacity Settings">
+          <div
             style={{
-              width: "140px",
-              height: "6px",
-              background: "rgba(255, 255, 255, 0.3)",
-              "border-radius": "3px",
-              outline: "none",
-              appearance: "none",
-              "-webkit-appearance": "none",
-            }}
-          />
-          <span
-            style={{
-              "min-width": "40px",
-              "font-weight": "600",
-              color: "rgba(0, 0, 0, 0.7)",
-              "font-size": "13px",
-              background: "rgba(255, 255, 255, 0.5)",
-              padding: "4px 8px",
-              "border-radius": "8px",
-              border: "1px solid rgba(255, 255, 255, 0.3)",
+              display: "flex",
+              "flex-direction": "column",
+              gap: "8px",
+              width: "100%",
+              "align-items": "center",
             }}
           >
-            {Math.round(state.opacity * 100)}%
-          </span>
-        </div>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={state.opacity * 100}
+              onInput={(e) =>
+                setState("opacity", parseInt(e.currentTarget.value) / 100)}
+              style={{
+                width: "100%",
+                height: "6px",
+                background: "rgba(255, 255, 255, 0.3)",
+                "border-radius": "3px",
+                outline: "none",
+                appearance: "none",
+                "-webkit-appearance": "none",
+              }}
+            />
+            <span
+              style={{
+                "font-weight": "600",
+                color: "rgba(0, 0, 0, 0.7)",
+                "font-size": "11px",
+                background: "rgba(255, 255, 255, 0.5)",
+                padding: "2px 6px",
+                "border-radius": "6px",
+                border: "1px solid rgba(255, 255, 255, 0.3)",
+              }}
+            >
+              {Math.round(state.opacity * 100)}%
+            </span>
+          </div>
+        </CollapsibleSetting>
       </>
     ),
     renderCanvas: (_props) => {

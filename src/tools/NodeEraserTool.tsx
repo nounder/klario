@@ -1,4 +1,5 @@
 import { createStore } from "solid-js/store"
+import CollapsibleSetting from "../CollapsibleSetting.tsx"
 import type { Node } from "../nodes/index.ts"
 import type { Bounds, StrokePoint } from "../types.ts"
 import * as Tool from "./Tool.ts"
@@ -253,48 +254,48 @@ export const make = Tool.build(() => {
     },
     renderSettings: () => (
       <>
-        {/* Width Slider */}
-        <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
-          <span
+        <CollapsibleSetting icon="📏" title="Eraser Size">
+          <div
             style={{
-              "font-weight": "600",
-              color: "rgba(0, 0, 0, 0.7)",
-              "font-size": "13px",
+              display: "flex",
+              "flex-direction": "column",
+              gap: "8px",
+              width: "100%",
+              "align-items": "center",
             }}
           >
-            Eraser Size:
-          </span>
-          <input
-            type="range"
-            min={5}
-            max={50}
-            value={state.width}
-            onInput={(e) => setState("width", parseInt(e.currentTarget.value))}
-            style={{
-              width: "140px",
-              height: "6px",
-              background: "rgba(255, 255, 255, 0.3)",
-              "border-radius": "3px",
-              outline: "none",
-              appearance: "none",
-              "-webkit-appearance": "none",
-            }}
-          />
-          <span
-            style={{
-              "min-width": "40px",
-              "font-weight": "600",
-              color: "rgba(0, 0, 0, 0.7)",
-              "font-size": "13px",
-              background: "rgba(255, 255, 255, 0.5)",
-              padding: "4px 8px",
-              "border-radius": "8px",
-              border: "1px solid rgba(255, 255, 255, 0.3)",
-            }}
-          >
-            {state.width}px
-          </span>
-        </div>
+            <input
+              type="range"
+              min={5}
+              max={50}
+              value={state.width}
+              onInput={(e) =>
+                setState("width", parseInt(e.currentTarget.value))}
+              style={{
+                width: "100%",
+                height: "6px",
+                background: "rgba(255, 255, 255, 0.3)",
+                "border-radius": "3px",
+                outline: "none",
+                appearance: "none",
+                "-webkit-appearance": "none",
+              }}
+            />
+            <span
+              style={{
+                "font-weight": "600",
+                color: "rgba(0, 0, 0, 0.7)",
+                "font-size": "11px",
+                background: "rgba(255, 255, 255, 0.5)",
+                padding: "2px 6px",
+                "border-radius": "6px",
+                border: "1px solid rgba(255, 255, 255, 0.3)",
+              }}
+            >
+              {state.width}px
+            </span>
+          </div>
+        </CollapsibleSetting>
       </>
     ),
     renderCanvas: (_props) => {

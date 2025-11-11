@@ -1,4 +1,4 @@
-import * as Router from "./Router.tsx"
+import * as Router from "../Router.tsx"
 
 export function About(props: { name?: string }) {
   return (

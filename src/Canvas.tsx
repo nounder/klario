@@ -27,7 +27,8 @@ export function Canvas(props: {
     | { x: number; y: number; width: number; height: number }
   rootStyle?: Record<string, string>
   onChange?: (nodes: Node[]) => void
-  children?: JSX.Element
+  overlay?: JSX.Element
+  underlay?: JSX.Element
 }) {
   // Canvas-specific local state
   const [canvasState, setCanvasState] = createStore<CanvasState>({
@@ -613,6 +614,8 @@ export function Canvas(props: {
         onSelectStart={(e) => e.preventDefault()}
         onDragStart={(e) => e.preventDefault()}
       >
+        {props.overlay}
+
         {/* Render completed nodes */}
         <For each={nodes()}>
           {(node) => {
@@ -629,6 +632,8 @@ export function Canvas(props: {
         {(toolInstance() as any)?.renderCanvas?.({
           pointerPosition: canvasState.pointerPosition,
         })}
+
+        {props.underlay}
       </svg>
     </div>
   )

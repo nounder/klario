@@ -1,5 +1,6 @@
 import { createStore } from "solid-js/store"
 
+import CollapsibleSetting from "../CollapsibleSetting.tsx"
 import * as ImageNode from "../nodes/ImageNode.tsx"
 import type { Node } from "../nodes/index.ts"
 import * as Unique from "../Unique.ts"
@@ -35,7 +36,7 @@ export const make = Tool.build(() => {
     },
     renderSettings: () => (
       <>
-        <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
+        <CollapsibleSetting icon="🔗" title="Image URL">
           <input
             type="text"
             placeholder="Image URL"
@@ -45,16 +46,24 @@ export const make = Tool.build(() => {
               padding: "8px 12px",
               background: "rgba(255, 255, 255, 0.5)",
               border: "2px solid rgba(255, 255, 255, 0.3)",
-              "border-radius": "10px",
-              "font-size": "13px",
-              "min-width": "200px",
+              "border-radius": "8px",
+              "font-size": "11px",
+              width: "100%",
+              "box-sizing": "border-box",
             }}
           />
-        </div>
+        </CollapsibleSetting>
 
-        <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
-          <label style={{ "font-size": "13px", "font-weight": "600" }}>
-            Width:
+        <CollapsibleSetting icon="↔️" title="Width">
+          <div
+            style={{
+              display: "flex",
+              "flex-direction": "column",
+              gap: "8px",
+              width: "100%",
+              "align-items": "center",
+            }}
+          >
             <input
               type="range"
               min={50}
@@ -63,17 +72,41 @@ export const make = Tool.build(() => {
               onInput={(e) =>
                 setState("width", parseInt(e.currentTarget.value))}
               style={{
-                width: "100px",
-                "margin-left": "8px",
+                width: "100%",
+                height: "6px",
+                background: "rgba(255, 255, 255, 0.3)",
+                "border-radius": "3px",
+                outline: "none",
+                appearance: "none",
+                "-webkit-appearance": "none",
               }}
             />
-            {state.width}px
-          </label>
-        </div>
+            <span
+              style={{
+                "font-weight": "600",
+                color: "rgba(0, 0, 0, 0.7)",
+                "font-size": "11px",
+                background: "rgba(255, 255, 255, 0.5)",
+                padding: "2px 6px",
+                "border-radius": "6px",
+                border: "1px solid rgba(255, 255, 255, 0.3)",
+              }}
+            >
+              {state.width}px
+            </span>
+          </div>
+        </CollapsibleSetting>
 
-        <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
-          <label style={{ "font-size": "13px", "font-weight": "600" }}>
-            Height:
+        <CollapsibleSetting icon="↕️" title="Height">
+          <div
+            style={{
+              display: "flex",
+              "flex-direction": "column",
+              gap: "8px",
+              width: "100%",
+              "align-items": "center",
+            }}
+          >
             <input
               type="range"
               min={50}
@@ -82,13 +115,30 @@ export const make = Tool.build(() => {
               onInput={(e) =>
                 setState("height", parseInt(e.currentTarget.value))}
               style={{
-                width: "100px",
-                "margin-left": "8px",
+                width: "100%",
+                height: "6px",
+                background: "rgba(255, 255, 255, 0.3)",
+                "border-radius": "3px",
+                outline: "none",
+                appearance: "none",
+                "-webkit-appearance": "none",
               }}
             />
-            {state.height}px
-          </label>
-        </div>
+            <span
+              style={{
+                "font-weight": "600",
+                color: "rgba(0, 0, 0, 0.7)",
+                "font-size": "11px",
+                background: "rgba(255, 255, 255, 0.5)",
+                padding: "2px 6px",
+                "border-radius": "6px",
+                border: "1px solid rgba(255, 255, 255, 0.3)",
+              }}
+            >
+              {state.height}px
+            </span>
+          </div>
+        </CollapsibleSetting>
       </>
     ),
   }
