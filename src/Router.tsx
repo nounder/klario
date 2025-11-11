@@ -1,6 +1,10 @@
 import type { JSX } from "solid-js"
 import { createSignal, onMount } from "solid-js"
 
+const [currentPath, setCurrentPath] = createSignal<string>(
+  typeof window !== "undefined" ? window.location.pathname : "/",
+)
+
 export type Route = {
   path: string
   render: (
@@ -10,13 +14,9 @@ export type Route = {
 
 export function navigate(url: string) {
   window.history.pushState({}, "", url)
-  window.dispatchEvent(new PopStateEvent("popstate"))
+  setCurrentPath(window.location.pathname)
 }
 
-export function Router(props: { routes: Route[] }) {
-  const [currentPath, setCurrentPath] = createSignal<string>(
-    window.location.pathname,
-  )
 export function navigateTransition(url: string) {
   if (typeof document === "undefined" || !document.startViewTransition) {
     navigate(url)
@@ -28,15 +28,16 @@ export function navigateTransition(url: string) {
   })
 }
 
+export function Router(props: { routes: Route[] }) {
   const matchRoute = (pathname: string): Route | undefined => {
     return props.routes.find((route) => pathname === route.path)
   }
 
-  const handlePopState = () => {
-    setCurrentPath(window.location.pathname)
-  }
-
   onMount(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname)
+    }
+
     window.addEventListener("popstate", handlePopState)
 
     return () => {
