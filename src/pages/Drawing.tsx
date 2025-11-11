@@ -42,8 +42,8 @@ export function Drawing() {
       style={{
         display: "flex",
         "flex-direction": "row",
-        height: "100vh",
-        width: "100vw",
+        height: "100%",
+        width: "100%",
         position: "relative",
         padding: "40px",
         gap: "40px",
@@ -56,7 +56,8 @@ export function Drawing() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: `linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%), url(${ZooBackgroundSvg}) repeat`,
+          background:
+            `linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%), url(${ZooBackgroundSvg}) repeat`,
           "background-size": "cover, 400px",
           "background-blend-mode": "overlay",
           opacity: 0.2,
