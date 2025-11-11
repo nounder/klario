@@ -1,10 +1,47 @@
 import { createMemo, createSignal } from "solid-js"
 import Bangkok2025ArabicaSvg from "../../assets/Bangkok2025Arabica.svg"
-import ZooBackgroundSvg from "../../assets/ZooBackground.svg"
 import * as Canvas from "../Canvas.tsx"
 import * as CanvasToolbar from "../CanvasToolbar.tsx"
+import * as Router from "../Router.tsx"
 import * as Tools from "../tools/index.ts"
 import type { ToolType } from "../tools/index.ts"
+import * as ViewTransitions from "../ViewTransitions.ts"
+
+function BackButton() {
+  const handleBackClick = () => {
+    Router.navigateTransition("/")
+  }
+
+  return (
+    <button
+      onClick={handleBackClick}
+      style={{
+        background: "white",
+        border: "none",
+        "border-radius": "12px",
+        width: "48px",
+        height: "48px",
+        display: "flex",
+        "align-items": "center",
+        "justify-content": "center",
+        cursor: "pointer",
+        "font-size": "24px",
+        "box-shadow": "0 2px 8px rgba(0, 0, 0, 0.1)",
+        transition: "all 0.2s",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-2px)"
+        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)"
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "translateY(0)"
+        e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.1)"
+      }}
+    >
+      ←
+    </button>
+  )
+}
 
 const tools: Array<{ type: ToolType; label: string; icon: string }> = [
   { type: "MarkerStrokeTool", label: "Marker", icon: "✏️" },
@@ -25,55 +62,49 @@ const toolInstances = {
   GroupTool: Tools.GroupTool.make(),
 }
 
-export function Drawing() {
+type DrawingPageProps = {
+  id?: string
+}
+
+export function DrawingPage(props: DrawingPageProps) {
   const [currentTool, setCurrentTool] = createSignal<ToolType>(
     "MarkerStrokeTool",
   )
   const toolInstance = createMemo(() => {
     return toolInstances[currentTool()]
   })
+  const canvasTransitionName =
+    ViewTransitions.getDrawingTransitionName(props.id)
 
   // Initial nodes to pass to Canvas
   const initialNodes: Canvas.Node[] = []
 
   const [nodes, setNodes] = createSignal<Canvas.Node[]>(initialNodes)
+
+  // You can use props.id to load specific drawing data in the future
   return (
-    <div
-      style={{
-        display: "flex",
-        "flex-direction": "row",
-        height: "100%",
-        width: "100%",
-        position: "relative",
-        padding: "40px",
-        gap: "40px",
-      }}
-    >
+    <>
       <div
         style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background:
-            `linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%), url(${ZooBackgroundSvg}) repeat`,
-          "background-size": "cover, 400px",
-          "background-blend-mode": "overlay",
-          opacity: 0.2,
-          "z-index": -1,
+          display: "flex",
+          "flex-direction": "column",
+          gap: "16px",
+          "align-items": "center",
+          width: "100px",
         }}
-      />
-      <CanvasToolbar.CanvasToolbar
-        toolList={tools}
-        tools={toolInstances}
-        currentTool={currentTool()}
-        onToolChange={(type: ToolType) => setCurrentTool(type)}
-        onClearCanvas={() => {
-          // Reset Canvas by resetting nodes to initial state
-          setNodes(initialNodes)
-        }}
-      />
+      >
+        <BackButton />
+        <CanvasToolbar.CanvasToolbar
+          toolList={tools}
+          tools={toolInstances}
+          currentTool={currentTool()}
+          onToolChange={(type: ToolType) => setCurrentTool(type)}
+          onClearCanvas={() => {
+            // Reset Canvas by resetting nodes to initial state
+            setNodes(initialNodes)
+          }}
+        />
+      </div>
 
       <div
         style={{
@@ -82,6 +113,7 @@ export function Drawing() {
           "align-items": "center",
           "justify-content": "center",
           "min-width": 0,
+          "view-transition-name": canvasTransitionName,
         }}
       >
         <div
@@ -116,6 +148,6 @@ export function Drawing() {
           />
         </div>
       </div>
-    </div>
+    </>
   )
 }

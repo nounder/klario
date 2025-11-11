@@ -1,5 +1,5 @@
 import type { JSX } from "solid-js"
-import { createSignal, onCleanup, onMount } from "solid-js"
+import { createSignal, onMount } from "solid-js"
 
 export type Route = {
   path: string
@@ -17,6 +17,16 @@ export function Router(props: { routes: Route[] }) {
   const [currentPath, setCurrentPath] = createSignal<string>(
     window.location.pathname,
   )
+export function navigateTransition(url: string) {
+  if (typeof document === "undefined" || !document.startViewTransition) {
+    navigate(url)
+    return
+  }
+
+  document.startViewTransition(() => {
+    navigate(url)
+  })
+}
 
   const matchRoute = (pathname: string): Route | undefined => {
     return props.routes.find((route) => pathname === route.path)

@@ -1,12 +1,18 @@
+import * as Layout from "./Layout.tsx"
 import * as About from "./pages/About.tsx"
-import * as Drawing from "./pages/Drawing.tsx"
+import * as DrawingPage from "./pages/DrawingPage.tsx"
+import * as DrawingListPage from "./pages/DrawingListPage.tsx"
 import * as Router from "./Router.tsx"
 
 export default function App() {
   const routes: Router.Route[] = [
     {
       path: "/",
-      render: () => <Drawing.Drawing />,
+      render: () => <DrawingListPage.DrawingListPage />,
+    },
+    {
+      path: "/drawing",
+      render: (route) => <DrawingPage.DrawingPage id={route.params.id} />,
     },
     {
       path: "/about",
@@ -14,5 +20,9 @@ export default function App() {
     },
   ]
 
-  return <Router.Router routes={routes} />
+  return (
+    <Layout.Layout>
+      <Router.Router routes={routes} />
+    </Layout.Layout>
+  )
 }
