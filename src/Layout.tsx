@@ -10,8 +10,7 @@ export function Layout(props: FlowProps) {
         height: "100%",
         width: "100%",
         position: "relative",
-        padding: "40px",
-        gap: "40px",
+        padding: "2rem",
       }}
     >
       <ZooBackground.ZooBackground />

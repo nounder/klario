@@ -580,6 +580,7 @@ export function Canvas(props: {
         flex: 1,
         position: "relative",
         overflow: "hidden",
+        contain: "layout paint size",
       }}
     >
       <svg
@@ -596,6 +597,7 @@ export function Canvas(props: {
           cursor: canvasState.isPanning && canvasState.panStart === null
             ? "grab"
             : undefined,
+          contain: "layout paint",
           ...props.rootStyle,
         }}
         onPointerEnter={(e) => handlePointerEnter(e)}

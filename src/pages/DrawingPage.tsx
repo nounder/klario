@@ -73,8 +73,9 @@ export function DrawingPage(props: DrawingPageProps) {
   const toolInstance = createMemo(() => {
     return toolInstances[currentTool()]
   })
-  const canvasTransitionName =
-    ViewTransitions.getDrawingTransitionName(props.id)
+  const canvasTransitionName = ViewTransitions.getDrawingTransitionName(
+    props.id,
+  )
 
   // Initial nodes to pass to Canvas
   const initialNodes: Canvas.Node[] = []

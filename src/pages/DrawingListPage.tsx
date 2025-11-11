@@ -1,7 +1,6 @@
 import { For } from "solid-js"
 import Bangkok2025ArabicaSvg from "../../assets/Bangkok2025Arabica.svg"
 import * as Router from "../Router.tsx"
-import * as ViewTransitions from "../ViewTransitions.ts"
 
 type DrawingItem = {
   imageUri: string
@@ -18,6 +17,8 @@ const drawingItems: DrawingItem[] = [
   { imageUri: Bangkok2025ArabicaSvg, title: "Drawing 7" },
   { imageUri: Bangkok2025ArabicaSvg, title: "Drawing 8" },
 ]
+
+const thumbnailTransitionName = (id: number) => `drawing-preview-${id}`
 
 export function DrawingListPage() {
   const handleDrawingClick = (index: number) => {
@@ -42,7 +43,7 @@ export function DrawingListPage() {
             "text-shadow": "0 2px 8px rgba(0, 0, 0, 0.2)",
           }}
         >
-          My Drawings
+          Klarowanki
         </h1>
 
         <div
@@ -67,10 +68,6 @@ export function DrawingListPage() {
                   "background-color": "white",
                   display: "flex",
                   "flex-direction": "column",
-                  "view-transition-name": ViewTransitions
-                    .getDrawingTransitionName(
-                      index(),
-                    ),
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-4px)"
@@ -88,6 +85,7 @@ export function DrawingListPage() {
                     width: "100%",
                     "aspect-ratio": "3 / 2",
                     overflow: "hidden",
+                    "view-transition-name": thumbnailTransitionName(index()),
                   }}
                 >
                   <img

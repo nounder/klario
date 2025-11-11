@@ -11,7 +11,6 @@ export function ZooBackground() {
         bottom: 0,
         background:
           `linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%), url(${ZooBackgroundSvg}) repeat`,
-        "background-size": "cover, 400px",
         "background-blend-mode": "overlay",
         opacity: 0.2,
         "z-index": -1,
