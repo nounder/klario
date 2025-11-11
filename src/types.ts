@@ -20,6 +20,7 @@ export type StrokePoint = {
 export type StrokeOptions = {
   width: number
   color: string
+  opacity?: number
 }
 
 export type ToolCanvasProps = {
@@ -39,6 +40,7 @@ export type MarkerStroke = {
   points: StrokePoint[]
   color: string
   width: number
+  opacity: number
   bounds: Bounds
 }
 

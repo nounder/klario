@@ -64,7 +64,7 @@ function renderMarkerStroke(
       <path
         d={pathData}
         fill={options.color}
-        fill-opacity={0.7}
+        fill-opacity={options.opacity ?? 1}
         shape-rendering="geometricPrecision"
       />
     )
@@ -78,7 +78,7 @@ function renderMarkerStroke(
       fill="none"
       stroke={options.color}
       stroke-width={options.width}
-      stroke-opacity={0.7}
+      stroke-opacity={options.opacity ?? 1}
       stroke-linecap="round"
       stroke-linejoin="round"
       shape-rendering="geometricPrecision"
@@ -96,6 +96,7 @@ export function render(
   const options = {
     width: node.stroke.width,
     color: node.stroke.color,
+    opacity: node.stroke.opacity,
   }
 
   return renderMarkerStroke(node.stroke.points, options)

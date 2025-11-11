@@ -28,6 +28,7 @@ export const make = Tool.build((options?: {
   const [state, setState] = createStore({
     color: "#000000",
     width: 8,
+    opacity: 1,
     currentPath: [] as StrokePoint[],
   })
 
@@ -68,6 +69,7 @@ export const make = Tool.build((options?: {
             points: simplifiedPoints,
             color: state.color,
             width: state.width,
+            opacity: state.opacity,
           },
         }
 
@@ -142,6 +144,42 @@ export const make = Tool.build((options?: {
             {state.width}px
           </span>
         </div>
+
+        <div
+          style={{ display: "flex", gap: "12px", "align-items": "center" }}
+        >
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={state.opacity * 100}
+            onInput={(e) =>
+              setState("opacity", parseInt(e.currentTarget.value) / 100)}
+            style={{
+              width: "140px",
+              height: "6px",
+              background: "rgba(255, 255, 255, 0.3)",
+              "border-radius": "3px",
+              outline: "none",
+              appearance: "none",
+              "-webkit-appearance": "none",
+            }}
+          />
+          <span
+            style={{
+              "min-width": "40px",
+              "font-weight": "600",
+              color: "rgba(0, 0, 0, 0.7)",
+              "font-size": "13px",
+              background: "rgba(255, 255, 255, 0.5)",
+              padding: "4px 8px",
+              "border-radius": "8px",
+              border: "1px solid rgba(255, 255, 255, 0.3)",
+            }}
+          >
+            {Math.round(state.opacity * 100)}%
+          </span>
+        </div>
       </>
     ),
     renderCanvas: (_props) => {
@@ -159,6 +197,7 @@ export const make = Tool.build((options?: {
                 points: state.currentPath,
                 width: state.width,
                 color: state.color,
+                opacity: state.opacity,
               },
             }
 
