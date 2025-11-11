@@ -577,16 +577,11 @@ export function Canvas(props: {
   return (
     <div
       style={{
-        flex: 1,
-        position: "relative",
-        overflow: "hidden",
-        contain: "layout paint size",
+        width: "100%",
       }}
     >
       <svg
         ref={svgRef}
-        width="100%"
-        height="100%"
         viewBox={`${canvasState.viewBox.x} ${canvasState.viewBox.y} ${canvasState.viewBox.width} ${canvasState.viewBox.height}`}
         preserveAspectRatio="xMidYMid meet"
         classList={{

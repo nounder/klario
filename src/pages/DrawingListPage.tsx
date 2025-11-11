@@ -68,6 +68,7 @@ export function DrawingListPage() {
                   "background-color": "white",
                   display: "flex",
                   "flex-direction": "column",
+                  "view-transition-name": thumbnailTransitionName(index()),
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-4px)"
@@ -85,7 +86,6 @@ export function DrawingListPage() {
                     width: "100%",
                     "aspect-ratio": "3 / 2",
                     overflow: "hidden",
-                    "view-transition-name": thumbnailTransitionName(index()),
                   }}
                 >
                   <img

@@ -112,42 +112,29 @@ export function DrawingPage(props: DrawingPageProps) {
           flex: "1",
           display: "flex",
           "align-items": "center",
-          "justify-content": "center",
-          "min-width": 0,
           "view-transition-name": canvasTransitionName,
         }}
       >
-        <div
-          style={{
-            background: "white",
-            "border-radius": "24px",
-            overflow: "hidden",
-            width: "100%",
-            height: "100%",
-            display: "flex",
+        <Canvas.Canvas
+          nodes={nodes()}
+          onChange={setNodes}
+          tool={toolInstance()}
+          bounds={{
+            x: 0,
+            y: 0,
+            width: 1536,
+            height: 1024,
           }}
-        >
-          <Canvas.Canvas
-            nodes={nodes()}
-            onChange={setNodes}
-            tool={toolInstance()}
-            bounds={{
-              x: 0,
-              y: 0,
-              width: 1536,
-              height: 1024,
-            }}
-            underlay={
-              <image
-                href={Bangkok2025ArabicaSvg}
-                x={0}
-                y={0}
-                width={1536}
-                height={1024}
-              />
-            }
-          />
-        </div>
+          underlay={
+            <image
+              href={Bangkok2025ArabicaSvg}
+              x={0}
+              y={0}
+              width={1536}
+              height={1024}
+            />
+          }
+        />
       </div>
     </>
   )
