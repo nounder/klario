@@ -4,6 +4,7 @@ export default function ColorPicker(props: {
   colors: string[]
   value: string
   onChange: (color: string) => void
+  onColorPicked?: () => void
 }) {
   return (
     <div
@@ -22,7 +23,10 @@ export default function ColorPicker(props: {
 
           return (
             <button
-              onClick={() => props.onChange(c)}
+              onClick={() => {
+                props.onChange(c)
+                props.onColorPicked?.()
+              }}
               onMouseEnter={(e) => {
                 if (props.value !== c) {
                   e.currentTarget.style.transform =

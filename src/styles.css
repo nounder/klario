@@ -30,14 +30,11 @@ body {
   touch-action: none;
 }
 
-
 button {
   user-select: none;
   /* Safari still needs prefix 2025-11-05 */
   -webkit-user-select: none;
 }
-
-
 
 #app {
   height: 100vh;

@@ -25,6 +25,7 @@ export const NodeType = MarkerStrokeNode.Type
 export const make = Tool.build((options?: {
   colors?: typeof DefaultColors
   epsilon?: number
+  onColorPicked?: () => void
 }) => {
   const [state, setState] = createStore({
     color: "#000000",
@@ -87,6 +88,7 @@ export const make = Tool.build((options?: {
           colors={colors}
           value={state.color}
           onChange={(c) => setState("color", c)}
+          onColorPicked={options?.onColorPicked}
         />
 
         <CollapsibleSetting icon="✏️" title="Width Settings">

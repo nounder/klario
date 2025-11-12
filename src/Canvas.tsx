@@ -145,21 +145,12 @@ export function Canvas(props: {
 
   // Set up event listeners on mount
   onMount(() => {
-    window.addEventListener("keydown", handleKeyDown)
-    window.addEventListener("keyup", handleKeyUp)
     window.addEventListener("resize", updateViewBox)
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-      window.removeEventListener("keyup", handleKeyUp)
       window.removeEventListener("resize", updateViewBox)
     }
   })
-
-  // Get screen/client coordinates for panning
-  const getScreenCoordinates = (e: PointerEvent): Point => {
-    return { x: e.clientX, y: e.clientY }
-  }
 
   // Get SVG coordinates for drawing (accounts for viewBox)
   const getCoordinates = (e: PointerEvent): StrokePoint => {
@@ -213,40 +204,42 @@ export function Canvas(props: {
     return point
   }
 
-  const handlePointerDown = (event: PointerEvent) => {
-    const target = event.target as Element
-    target.setPointerCapture(event.pointerId)
-    event.preventDefault()
-    event.stopPropagation()
-  }
-
-  const releasePointer = (event: PointerEvent) => {
-    try {
-      const target = event.target as Element
-      target.releasePointerCapture(event.pointerId)
-    } catch (e) {
-      // Ignore errors if pointer was already released
-    }
-  }
-
   const startDrawing = (e: PointerEvent) => {
+    // If we're already drawing with a different pointer, ignore this one
     if (
       canvasState.isDrawing
       && canvasState.activePointerId !== null
       && canvasState.activePointerId !== e.pointerId
     ) {
-      return
-    }
-
-    handlePointerDown(e)
-
-    if (canvasState.isPanning) {
-      startPanning(e)
+      console.log(
+        `Ignoring pointer ${e.pointerId} (${e.pointerType}), already drawing with ${canvasState.activePointerId}`,
+      )
       return
     }
 
     const instance = toolInstance()
     if (!instance) return
+
+    e.preventDefault()
+    e.stopPropagation()
+
+    console.log(
+      `Starting drawing with pointer ${e.pointerId} (${e.pointerType})`,
+    )
+
+    // Set state BEFORE capturing pointer
+    setCanvasState({
+      isDrawing: true,
+      activePointerId: e.pointerId,
+    })
+
+    // Capture the pointer to receive all events for this pointer
+    const target = e.target as Element
+    try {
+      target.setPointerCapture(e.pointerId)
+    } catch (err) {
+      console.error("Failed to capture pointer:", err)
+    }
 
     const point = getCoordinates(e)
     const tool = props.tool
@@ -264,33 +257,23 @@ export function Canvas(props: {
         },
         nodes: nodes(),
       })
-      setCanvasState({
-        isDrawing: true,
-        activePointerId: e.pointerId,
-      })
     }
   }
 
   const draw = (e: PointerEvent) => {
-    if (canvasState.isPanning) {
-      pan(e)
-      return
-    }
-
     // Update pointer position in canvas state
-    if (!canvasState.isPanning) {
-      const point = getCoordinates(e)
-      setCanvasState("pointerPosition", { x: point.x, y: point.y })
-    }
+    const point = getCoordinates(e)
+    setCanvasState("pointerPosition", { x: point.x, y: point.y })
 
+    // Only process drawing if we're actively drawing with this pointer
     if (!canvasState.isDrawing || canvasState.activePointerId !== e.pointerId) {
       return
     }
+
     const instance = toolInstance()
     if (!instance) return
 
     e.preventDefault()
-    const point = getCoordinates(e)
     const tool = props.tool
 
     // Call the tool's onPointerMove handler if it exists
@@ -340,18 +323,20 @@ export function Canvas(props: {
   }
 
   const stopDrawing = (e?: PointerEvent) => {
-    if (canvasState.isPanning && canvasState.panStart) {
-      stopPanning()
-      return
-    }
-
     if (
       e
       && canvasState.activePointerId !== null
       && canvasState.activePointerId !== e.pointerId
     ) {
+      console.log(
+        `Ignoring pointerup ${e.pointerId} (${e.pointerType}), active pointer is ${canvasState.activePointerId}`,
+      )
       return
     }
+
+    console.log(
+      `Stopping drawing with pointer ${e?.pointerId} (${e?.pointerType})`,
+    )
 
     const instance = toolInstance()
     if (canvasState.isDrawing && instance) {
@@ -373,25 +358,32 @@ export function Canvas(props: {
           },
           nodes: nodes(),
         })
-        setCanvasState({
-          isDrawing: false,
-          activePointerId: null,
-        })
-      } else {
-        setCanvasState("isDrawing", false)
-        setCanvasState("activePointerId", null)
       }
-    } else {
-      setCanvasState("isDrawing", false)
-      setCanvasState("activePointerId", null)
     }
 
+    // Always reset state and release pointer
+    setCanvasState({
+      isDrawing: false,
+      activePointerId: null,
+    })
+
+    // Release pointer capture
     if (e) {
-      releasePointer(e)
+      try {
+        const target = e.target as Element
+        target.releasePointerCapture(e.pointerId)
+        console.log(`Released pointer capture for ${e.pointerId}`)
+      } catch (err) {
+        console.error("Failed to release pointer capture:", err)
+      }
     }
   }
 
   const cancelDrawing = (e: PointerEvent) => {
+    console.log(
+      `Canceling drawing with pointer ${e.pointerId} (${e.pointerType})`,
+    )
+
     const instance = toolInstance()
     if (canvasState.activePointerId === e.pointerId && instance) {
       const tool = props.tool
@@ -401,18 +393,25 @@ export function Canvas(props: {
         ;(tool as any).onPointerCancel({
           setState: (instance as any).setState,
           setAppStore: (_updates: any) => {
-            setCanvasState({
-              isDrawing: false,
-              activePointerId: null,
-            })
+            // State will be reset below
           },
         })
-      } else {
-        setCanvasState("isDrawing", false)
-        setCanvasState("activePointerId", null)
       }
+    }
 
-      releasePointer(e)
+    // Always reset state and release pointer on cancel
+    setCanvasState({
+      isDrawing: false,
+      activePointerId: null,
+    })
+
+    // Release pointer capture
+    try {
+      const target = e.target as Element
+      target.releasePointerCapture(e.pointerId)
+      console.log(`Released pointer capture for ${e.pointerId} on cancel`)
+    } catch (err) {
+      console.error("Failed to release pointer capture on cancel:", err)
     }
   }
 
@@ -456,33 +455,7 @@ export function Canvas(props: {
     return updatedNode
   }
 
-  // Get canvas bounds including current tool path (for panning calculations)
-  const canvasBounds = createMemo((): Bounds | null => {
-    const bounds = internalCanvasBounds()
 
-    // Include current drawing path in bounds calculation
-    const instance = toolInstance() as any
-    if (instance?.state?.currentPath?.length > 0) {
-      const pathBounds = calculateBoundsFromPoints(
-        instance.state.currentPath,
-        50,
-      )
-      return mergeBounds(bounds, pathBounds)
-    }
-
-    return bounds
-  })
-
-  // Check if panning should be enabled
-  const canPan = createMemo((): boolean => {
-    const bounds = canvasBounds()
-    if (!bounds) return false
-
-    return (
-      bounds.width > canvasState.viewBox.width
-      || bounds.height > canvasState.viewBox.height
-    )
-  })
 
   // Update viewBox based on current SVG size
   const updateViewBox = () => {
@@ -498,82 +471,6 @@ export function Canvas(props: {
     }))
   }
 
-  // Panning functions
-  const startPanning = (e: PointerEvent) => {
-    if (!canPan()) return
-    e.preventDefault()
-    const point = getScreenCoordinates(e)
-    setCanvasState("panStart", point)
-  }
-
-  const pan = (e: PointerEvent) => {
-    if (!canvasState.isPanning || !canvasState.panStart || !svgRef) return
-    e.preventDefault()
-
-    const point = getScreenCoordinates(e)
-    const rect = svgRef.getBoundingClientRect()
-
-    const screenDx = point.x - canvasState.panStart.x
-    const screenDy = point.y - canvasState.panStart.y
-    const viewBoxDx = (screenDx / rect.width) * canvasState.viewBox.width
-    const viewBoxDy = (screenDy / rect.height) * canvasState.viewBox.height
-
-    setCanvasState("viewBox", (vb) => {
-      const bounds = canvasBounds()
-
-      let newX = vb.x - viewBoxDx
-      let newY = vb.y - viewBoxDy
-
-      if (bounds && canPan()) {
-        if (bounds.width > vb.width) {
-          newX = Math.max(
-            bounds.x,
-            Math.min(bounds.x + bounds.width - vb.width, newX),
-          )
-        } else {
-          newX = vb.x
-        }
-
-        if (bounds.height > vb.height) {
-          newY = Math.max(
-            bounds.y,
-            Math.min(bounds.y + bounds.height - vb.height, newY),
-          )
-        } else {
-          newY = vb.y
-        }
-      }
-
-      return {
-        ...vb,
-        x: newX,
-        y: newY,
-      }
-    })
-
-    setCanvasState("panStart", point)
-  }
-
-  const stopPanning = () => {
-    setCanvasState("panStart", null)
-  }
-
-  // Handle keyboard events
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.code === "Space" && !canvasState.isPanning) {
-      e.preventDefault()
-      setCanvasState("isPanning", true)
-    }
-  }
-
-  const handleKeyUp = (e: KeyboardEvent) => {
-    if (e.code === "Space") {
-      e.preventDefault()
-      setCanvasState("isPanning", false)
-      setCanvasState("panStart", null)
-    }
-  }
-
   return (
     <div
       style={{
@@ -584,14 +481,7 @@ export function Canvas(props: {
         ref={svgRef}
         viewBox={`${canvasState.viewBox.x} ${canvasState.viewBox.y} ${canvasState.viewBox.width} ${canvasState.viewBox.height}`}
         preserveAspectRatio="xMidYMid meet"
-        classList={{
-          panning: canvasState.isPanning && canvasState.panStart !== null,
-          drawing: !canvasState.isPanning,
-        }}
         style={{
-          cursor: canvasState.isPanning && canvasState.panStart === null
-            ? "grab"
-            : undefined,
           contain: "layout paint",
           ...props.rootStyle,
         }}
