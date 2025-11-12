@@ -1,7 +1,7 @@
-import { For } from "solid-js"
 import { createStore } from "solid-js/store"
 
 import CollapsibleSetting from "../CollapsibleSetting.tsx"
+import ColorPicker from "../ColorPicker.tsx"
 import type { Node } from "../nodes/index.ts"
 import * as TextNode from "../nodes/TextNode.tsx"
 import * as Unique from "../Unique.ts"
@@ -55,38 +55,11 @@ export const make = Tool.build(() => {
     },
     renderSettings: () => (
       <>
-        <div
-          style={{
-            display: "grid",
-            "grid-template-columns": "1fr 1fr",
-            gap: "8px",
-            width: "100%",
-          }}
-        >
-          <For each={colors}>
-            {(c) => (
-              <button
-                onClick={() => setState("color", c)}
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  border: state.color === c
-                    ? "3px solid rgba(0, 0, 0, 0.6)"
-                    : "2px solid rgba(255, 255, 255, 0.3)",
-                  background: c,
-                  cursor: "pointer",
-                  "border-radius": "8px",
-                  "box-shadow": state.color === c
-                    ? "0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.5)"
-                    : "0 2px 8px rgba(0, 0, 0, 0.1)",
-                  transition: "all 0.2s ease",
-                  transform: state.color === c ? "scale(1.05)" : "scale(1)",
-                }}
-                title={c}
-              />
-            )}
-          </For>
-        </div>
+        <ColorPicker
+          colors={colors}
+          value={state.color}
+          onChange={(c) => setState("color", c)}
+        />
 
         <CollapsibleSetting icon="🔤" title="Font Size">
           <div
