@@ -1,5 +1,5 @@
 import { createMemo, For } from "solid-js"
-import type { ToolType, ToolInstance } from "./tools/index.ts"
+import type { ToolInstance, ToolType } from "./tools/index.ts"
 
 function ToolButton(props: {
   type: ToolType
@@ -52,7 +52,6 @@ function ActionButton(props: {
         padding: "16px",
         background: "rgba(239, 68, 68, 0.9)",
         "backdrop-filter": "blur(10px)",
-        "-webkit-backdrop-filter": "blur(10px)",
         color: "white",
         border: "1px solid rgba(255, 255, 255, 0.2)",
         "border-radius": "12px",

@@ -4,21 +4,98 @@ import * as Router from "../Router.tsx"
 
 type DrawingItem = {
   imageUri: string
-  title: string
 }
 
 const drawingItems: DrawingItem[] = [
-  { imageUri: Bangkok2025ArabicaSvg, title: "Drawing 1" },
-  { imageUri: Bangkok2025ArabicaSvg, title: "Drawing 2" },
-  { imageUri: Bangkok2025ArabicaSvg, title: "Drawing 3" },
-  { imageUri: Bangkok2025ArabicaSvg, title: "Drawing 4" },
-  { imageUri: Bangkok2025ArabicaSvg, title: "Drawing 5" },
-  { imageUri: Bangkok2025ArabicaSvg, title: "Drawing 6" },
-  { imageUri: Bangkok2025ArabicaSvg, title: "Drawing 7" },
-  { imageUri: Bangkok2025ArabicaSvg, title: "Drawing 8" },
+  { imageUri: Bangkok2025ArabicaSvg },
+  { imageUri: Bangkok2025ArabicaSvg },
+  { imageUri: Bangkok2025ArabicaSvg },
+  { imageUri: Bangkok2025ArabicaSvg },
+  { imageUri: Bangkok2025ArabicaSvg },
+  { imageUri: Bangkok2025ArabicaSvg },
+  { imageUri: Bangkok2025ArabicaSvg },
+  { imageUri: Bangkok2025ArabicaSvg },
 ]
 
 const thumbnailTransitionName = (id: number) => `drawing-preview-${id}`
+
+function Headline() {
+  const text = "KLAROWANKI"
+  const colors = [
+    "#FF6B6B",
+    "#4ECDC4",
+    "#45B7D1",
+    "#FFA07A",
+    "#98D8C8",
+    "#F7DC6F",
+    "#BB8FCE",
+    "#85C1E2",
+    "#F8B739",
+    "#52B788",
+  ]
+
+  return (
+    <>
+      <style>
+        {`
+          @keyframes squiggle {
+            0%, 100% {
+              transform: rotate(var(--base-rotation));
+            }
+            33% {
+              transform: rotate(calc(var(--base-rotation) + var(--wobble-amount) * 0.7));
+            }
+            66% {
+              transform: rotate(calc(var(--base-rotation) - var(--wobble-amount) * 0.5));
+            }
+          }
+          
+          .headline-letter {
+            display: inline-block;
+            animation: squiggle 2.5s ease-in-out infinite;
+            animation-delay: calc(var(--letter-index) * 0.08s);
+          }
+        `}
+      </style>
+      <div
+        style={{
+          display: "flex",
+          "justify-content": "center",
+        }}
+      >
+        <h1
+          style={{
+            margin: "0 0 40px 0",
+            "font-size": "48px",
+            "font-weight": "900",
+            "text-shadow": "0 2px 8px rgba(0, 0, 0, 0.2)",
+            "letter-spacing": "1rem",
+          }}
+        >
+          <For each={text.split("")}>
+            {(letter, index) => {
+              const baseRotation = Math.random() * 16 - 8
+              const wobbleAmount = Math.random() * 8 + 4
+              return (
+                <span
+                  class="headline-letter"
+                  style={{
+                    color: colors[index() % colors.length],
+                    "--base-rotation": `${baseRotation}deg`,
+                    "--wobble-amount": `${wobbleAmount}deg`,
+                    "--letter-index": index(),
+                  }}
+                >
+                  {letter}
+                </span>
+              )
+            }}
+          </For>
+        </h1>
+      </div>
+    </>
+  )
+}
 
 export function DrawingListPage() {
   const handleDrawingClick = (index: number) => {
@@ -35,16 +112,7 @@ export function DrawingListPage() {
           "min-width": 0,
         }}
       >
-        <h1
-          style={{
-            margin: "0 0 40px 0",
-            "font-size": "48px",
-            color: "white",
-            "text-shadow": "0 2px 8px rgba(0, 0, 0, 0.2)",
-          }}
-        >
-          Klarowanki
-        </h1>
+        <Headline />
 
         <div
           style={{
@@ -58,27 +126,27 @@ export function DrawingListPage() {
           <For each={drawingItems}>
             {(item, index) => (
               <div
+                class="drawing-item-3d"
                 onClick={() => handleDrawingClick(index())}
                 style={{
                   cursor: "pointer",
                   "border-radius": "12px",
-                  overflow: "hidden",
                   "box-shadow": "0 2px 8px rgba(0, 0, 0, 0.1)",
-                  transition: "transform 0.2s, box-shadow 0.2s",
                   "background-color": "white",
                   display: "flex",
                   "flex-direction": "column",
                   "view-transition-name": thumbnailTransitionName(index()),
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-4px)"
-                  e.currentTarget.style.boxShadow =
-                    "0 4px 16px rgba(0, 0, 0, 0.2)"
+                onPointerMove={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect()
+                  const x = (e.clientX - rect.left) / rect.width - 0.5
+                  const y = (e.clientY - rect.top) / rect.height - 0.5
+                  e.currentTarget.style.setProperty("--x", x.toString())
+                  e.currentTarget.style.setProperty("--y", y.toString())
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)"
-                  e.currentTarget.style.boxShadow =
-                    "0 2px 8px rgba(0, 0, 0, 0.1)"
+                onPointerLeave={(e) => {
+                  e.currentTarget.style.setProperty("--x", "0")
+                  e.currentTarget.style.setProperty("--y", "0")
                 }}
               >
                 <div
@@ -90,23 +158,13 @@ export function DrawingListPage() {
                 >
                   <img
                     src={item.imageUri}
-                    alt={item.title}
+                    alt="Drawing"
                     style={{
                       width: "100%",
                       height: "100%",
                       "object-fit": "cover",
                     }}
                   />
-                </div>
-                <div
-                  style={{
-                    padding: "16px",
-                    "font-size": "16px",
-                    "font-weight": "500",
-                    color: "#333",
-                  }}
-                >
-                  {item.title}
                 </div>
               </div>
             )}
