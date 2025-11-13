@@ -23,28 +23,7 @@ function BackButton(props: { hasUnsavedChanges: boolean }) {
   return (
     <button
       onClick={handleBackClick}
-      style={{
-        background: "white",
-        border: "none",
-        "border-radius": "12px",
-        width: "48px",
-        height: "48px",
-        display: "flex",
-        "align-items": "center",
-        "justify-content": "center",
-        cursor: "pointer",
-        "font-size": "24px",
-        "box-shadow": "0 2px 8px rgba(0, 0, 0, 0.1)",
-        transition: "all 0.2s",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-2px)"
-        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)"
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0)"
-        e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.1)"
-      }}
+      class="bg-white border-none rounded-xl w-12 h-12 flex items-center justify-center cursor-pointer text-2xl shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
     >
       ←
     </button>
@@ -62,7 +41,6 @@ function ToolButton(props: {
   return (
     <button
       onClick={props.onClick}
-      style={{}}
       title={props.label}
     >
       {props.icon === "pencil"
@@ -71,9 +49,7 @@ function ToolButton(props: {
             width="48"
             height="48"
             viewBox="0 0 10 58"
-            style={{
-              background: "none",
-            }}
+            class="bg-transparent"
           >
             <image
               href={PencilSvg}
@@ -100,24 +76,7 @@ function ActionButton(props: {
   return (
     <button
       onClick={props.onClick}
-      style={{
-        padding: "16px",
-        background: "rgba(239, 68, 68, 0.9)",
-        "backdrop-filter": "blur(10px)",
-        color: "white",
-        border: "1px solid rgba(255, 255, 255, 0.2)",
-        "border-radius": "12px",
-        cursor: "pointer",
-        "font-size": "20px",
-        "box-shadow":
-          "0 4px 16px rgba(239, 68, 68, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1)",
-        transition: "all 0.2s ease",
-        width: "56px",
-        height: "56px",
-        display: "flex",
-        "align-items": "center",
-        "justify-content": "center",
-      }}
+      class="p-4 bg-red-500/90 backdrop-blur-md text-white border border-white/20 rounded-xl cursor-pointer text-xl shadow-lg transition-all duration-200 ease-in-out w-14 h-14 flex items-center justify-center"
       title="Clear Canvas"
     >
       {props.children}
@@ -132,31 +91,9 @@ function Toolbar(props: {
   markerTool: any
 }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        "flex-direction": "column",
-        gap: "16px",
-        "align-items": "center",
-        width: "100px",
-        "max-width": "100px",
-        height: "100%",
-        "min-height": 0,
-      }}
-    >
+    <div class="flex flex-col gap-4 items-center w-[100px] max-w-[100px] h-full min-h-0">
       {/* Tool buttons section - can shrink */}
-      <div
-        style={{
-          display: "flex",
-          "flex-direction": "column",
-          gap: "10px",
-          "align-items": "center",
-          width: "100%",
-          "flex-shrink": "1",
-          "min-height": 0,
-          overflow: "auto",
-        }}
-      >
+      <div class="flex flex-col gap-2.5 items-center w-full shrink min-h-0 overflow-auto">
         <ToolButton
           type="MarkerStrokeTool"
           label="Marker"
@@ -176,35 +113,15 @@ function Toolbar(props: {
       </div>
 
       {/* Tool-specific settings section - can shrink */}
-      <div
-        style={{
-          width: "100%",
-          display: "flex",
-          "flex-direction": "column",
-          gap: "12px",
-          "align-items": "center",
-          "flex-shrink": "1",
-          "min-height": 0,
-          overflow: "auto",
-        }}
-      >
+      <div class="w-full flex flex-col gap-3 items-center shrink min-h-0 overflow-auto">
         {props.markerTool.renderSettings?.()}
       </div>
 
       {/* Spacer - grows to push action buttons to bottom */}
-      <div style={{ "flex-grow": "1" }} />
+      <div class="grow" />
 
        {/* Action buttons section - always visible, never shrinks */}
-      <div
-        style={{
-          width: "100%",
-          "flex-shrink": "0",
-          display: "flex",
-          "flex-direction": "column",
-          gap: "10px",
-          "align-items": "center",
-        }}
-      >
+      <div class="w-full shrink-0 flex flex-col gap-2.5 items-center">
         <ActionButton
           onClick={() => {
             const confirmed = window.confirm(
@@ -286,15 +203,7 @@ export function DrawingPage(props: DrawingPageProps) {
   // You can use props.id to load specific drawing data in the future
   return (
     <>
-      <div
-        style={{
-          display: "flex",
-          "flex-direction": "column",
-          gap: "16px",
-          "align-items": "center",
-          width: "100px",
-        }}
-      >
+      <div class="flex flex-col gap-4 items-center w-[100px]">
         <BackButton hasUnsavedChanges={hasUnsavedChanges()} />
          <Toolbar
            currentTool={currentTool()}
@@ -308,10 +217,8 @@ export function DrawingPage(props: DrawingPageProps) {
       </div>
 
       <div
+        class="flex-1 flex items-center"
         style={{
-          flex: "1",
-          display: "flex",
-          "align-items": "center",
           "view-transition-name": canvasTransitionName,
         }}
       >

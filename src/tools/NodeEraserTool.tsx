@@ -255,15 +255,7 @@ export const make = Tool.build(() => {
     renderSettings: () => (
       <>
         <CollapsibleSetting icon="📏" title="Eraser Size">
-          <div
-            style={{
-              display: "flex",
-              "flex-direction": "column",
-              gap: "8px",
-              width: "100%",
-              "align-items": "center",
-            }}
-          >
+          <div class="flex flex-col gap-2 w-full items-center">
             <input
               type="range"
               min={5}
@@ -271,27 +263,9 @@ export const make = Tool.build(() => {
               value={state.width}
               onInput={(e) =>
                 setState("width", parseInt(e.currentTarget.value))}
-              style={{
-                width: "100%",
-                height: "6px",
-                background: "rgba(255, 255, 255, 0.3)",
-                "border-radius": "3px",
-                outline: "none",
-                appearance: "none",
-                "-webkit-appearance": "none",
-              }}
+              class="w-full h-1.5 bg-white/30 rounded outline-none appearance-none"
             />
-            <span
-              style={{
-                "font-weight": "600",
-                color: "rgba(0, 0, 0, 0.7)",
-                "font-size": "11px",
-                background: "rgba(255, 255, 255, 0.5)",
-                padding: "2px 6px",
-                "border-radius": "6px",
-                border: "1px solid rgba(255, 255, 255, 0.3)",
-              }}
-            >
+            <span class="font-semibold text-black/70 text-[11px] bg-white/50 px-1.5 py-0.5 rounded-md border border-white/30">
               {state.width}px
             </span>
           </div>
@@ -300,7 +274,7 @@ export const make = Tool.build(() => {
     ),
     renderCanvas: (_props) => {
       return (
-        <g style={{ "will-change": "transform" }}>
+        <g class="will-change-transform">
           {/* Render temporary eraser path preview while drawing */}
           {state.currentPath.length > 0 && (() => {
             const points = state.currentPath

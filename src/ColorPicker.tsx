@@ -7,15 +7,7 @@ export default function ColorPicker(props: {
   onColorPicked?: () => void
 }) {
   return (
-    <div
-      style={{
-        display: "grid",
-        "grid-template-columns": "1fr 1fr",
-        gap: "8px",
-        width: "100%",
-        padding: "12px 8px", // Prevent clipping from parent overflow:auto on hover scale
-      }}
-    >
+    <div class="grid grid-cols-2 gap-2 w-full px-2 py-3">
       <For each={props.colors}>
         {(c, i) => {
           // Generate consistent random rotation based on index
@@ -39,19 +31,14 @@ export default function ColorPicker(props: {
                     `scale(1) rotate(${baseRotation}deg)`
                 }
               }}
+              class="w-9 h-9 cursor-pointer rounded-lg transition-all duration-200 ease-in-out"
+              classList={{
+                "border-[3px] border-black/60 shadow-lg ring-2 ring-white/50":
+                  props.value === c,
+                "border-2 border-white/30 shadow-md": props.value !== c,
+              }}
               style={{
-                width: "36px",
-                height: "36px",
-                border: props.value === c
-                  ? "3px solid rgba(0, 0, 0, 0.6)"
-                  : "2px solid rgba(255, 255, 255, 0.3)",
                 background: c,
-                cursor: "pointer",
-                "border-radius": "8px",
-                "box-shadow": props.value === c
-                  ? "0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.5)"
-                  : "0 2px 8px rgba(0, 0, 0, 0.1)",
-                transition: "all 0.2s ease",
                 transform: props.value === c
                   ? `scale(1.1) rotate(${baseRotation}deg)`
                   : `scale(1) rotate(${baseRotation}deg)`,

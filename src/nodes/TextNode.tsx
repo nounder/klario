@@ -68,13 +68,10 @@ export function render(
           contentEditable="plaintext-only"
           onKeyDown={handleKeyDown}
           onInput={handleInput}
+          class="outline-none whitespace-pre-wrap break-words min-w-[20px]"
           style={{
             "font-size": `${node.fontSize}px`,
             color: node.color,
-            outline: "none",
-            "white-space": "pre-wrap",
-            "word-wrap": "break-word",
-            "min-width": "20px",
             "min-height": `${node.fontSize}px`,
           }}
         >
@@ -93,14 +90,11 @@ export function render(
       height={300}
     >
       <div
+        class="whitespace-pre-wrap break-words min-w-[20px] pointer-events-none"
         style={{
           "font-size": `${node.fontSize}px`,
           color: node.color,
-          "white-space": "pre-wrap",
-          "word-wrap": "break-word",
-          "min-width": "20px",
           "min-height": `${node.fontSize}px`,
-          "pointer-events": "none",
         }}
       >
         {node.content}

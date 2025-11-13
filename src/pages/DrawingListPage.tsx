@@ -57,21 +57,8 @@ function Headline() {
           }
         `}
       </style>
-      <div
-        style={{
-          display: "flex",
-          "justify-content": "center",
-        }}
-      >
-        <h1
-          style={{
-            margin: "0 0 40px 0",
-            "font-size": "48px",
-            "font-weight": "900",
-            "text-shadow": "0 2px 8px rgba(0, 0, 0, 0.2)",
-            "letter-spacing": "1rem",
-          }}
-        >
+      <div class="flex justify-center">
+        <h1 class="text-5xl font-black tracking-[1rem]">
           <For each={text.split("")}>
             {(letter, index) => {
               const baseRotation = Math.random() * 16 - 8
@@ -104,37 +91,18 @@ export function DrawingListPage() {
 
   return (
     <>
-      <div
-        style={{
-          flex: "1",
-          display: "flex",
-          "flex-direction": "column",
-          "min-width": 0,
-        }}
-      >
-        <Headline />
+      <div class="flex-1 flex flex-col min-w-0">
+        <div class="mb-8">
+          <Headline />
+        </div>
 
-        <div
-          style={{
-            display: "grid",
-            "grid-template-columns": "repeat(4, 1fr)",
-            gap: "24px",
-            "flex-grow": 1,
-            "align-content": "start",
-          }}
-        >
+        <div class="grid grid-cols-4 gap-6 grow content-start">
           <For each={drawingItems}>
             {(item, index) => (
               <div
-                class="drawing-item-3d"
+                class="drawing-item-3d cursor-pointer rounded-xl shadow-md bg-white flex flex-col"
                 onClick={() => handleDrawingClick(index())}
                 style={{
-                  cursor: "pointer",
-                  "border-radius": "12px",
-                  "box-shadow": "0 2px 8px rgba(0, 0, 0, 0.1)",
-                  "background-color": "white",
-                  display: "flex",
-                  "flex-direction": "column",
                   "view-transition-name": thumbnailTransitionName(index()),
                 }}
                 onPointerMove={(e) => {
@@ -149,21 +117,11 @@ export function DrawingListPage() {
                   e.currentTarget.style.setProperty("--y", "0")
                 }}
               >
-                <div
-                  style={{
-                    width: "100%",
-                    "aspect-ratio": "3 / 2",
-                    overflow: "hidden",
-                  }}
-                >
+                <div class="w-full aspect-[3/2] overflow-hidden">
                   <img
                     src={item.imageUri}
                     alt="Drawing"
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      "object-fit": "cover",
-                    }}
+                    class="w-full h-full object-cover"
                   />
                 </div>
               </div>

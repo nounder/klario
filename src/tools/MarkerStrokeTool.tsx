@@ -92,15 +92,7 @@ export const make = Tool.build((options?: {
         />
 
         <CollapsibleSetting icon="✏️" title="Width Settings">
-          <div
-            style={{
-              display: "flex",
-              "flex-direction": "column",
-              gap: "8px",
-              width: "100%",
-              "align-items": "center",
-            }}
-          >
+          <div class="flex flex-col gap-2 w-full items-center">
             <input
               type="range"
               min={3}
@@ -108,42 +100,16 @@ export const make = Tool.build((options?: {
               value={state.width}
               onInput={(e) =>
                 setState("width", parseInt(e.currentTarget.value))}
-              style={{
-                width: "100%",
-                height: "6px",
-                background: "rgba(255, 255, 255, 0.3)",
-                "border-radius": "3px",
-                outline: "none",
-                appearance: "none",
-                "-webkit-appearance": "none",
-              }}
+              class="w-full h-1.5 bg-white/30 rounded outline-none appearance-none"
             />
-            <span
-              style={{
-                "font-weight": "600",
-                color: "rgba(0, 0, 0, 0.7)",
-                "font-size": "11px",
-                background: "rgba(255, 255, 255, 0.5)",
-                padding: "2px 6px",
-                "border-radius": "6px",
-                border: "1px solid rgba(255, 255, 255, 0.3)",
-              }}
-            >
+            <span class="font-semibold text-black/70 text-[11px] bg-white/50 px-1.5 py-0.5 rounded-md border border-white/30">
               {state.width}px
             </span>
           </div>
         </CollapsibleSetting>
 
         <CollapsibleSetting icon="💧" title="Opacity Settings">
-          <div
-            style={{
-              display: "flex",
-              "flex-direction": "column",
-              gap: "8px",
-              width: "100%",
-              "align-items": "center",
-            }}
-          >
+          <div class="flex flex-col gap-2 w-full items-center">
             <input
               type="range"
               min={0}
@@ -151,27 +117,9 @@ export const make = Tool.build((options?: {
               value={state.opacity * 100}
               onInput={(e) =>
                 setState("opacity", parseInt(e.currentTarget.value) / 100)}
-              style={{
-                width: "100%",
-                height: "6px",
-                background: "rgba(255, 255, 255, 0.3)",
-                "border-radius": "3px",
-                outline: "none",
-                appearance: "none",
-                "-webkit-appearance": "none",
-              }}
+              class="w-full h-1.5 bg-white/30 rounded outline-none appearance-none"
             />
-            <span
-              style={{
-                "font-weight": "600",
-                color: "rgba(0, 0, 0, 0.7)",
-                "font-size": "11px",
-                background: "rgba(255, 255, 255, 0.5)",
-                padding: "2px 6px",
-                "border-radius": "6px",
-                border: "1px solid rgba(255, 255, 255, 0.3)",
-              }}
-            >
+            <span class="font-semibold text-black/70 text-[11px] bg-white/50 px-1.5 py-0.5 rounded-md border border-white/30">
               {Math.round(state.opacity * 100)}%
             </span>
           </div>
@@ -180,7 +128,7 @@ export const make = Tool.build((options?: {
     ),
     renderCanvas: (_props) => {
       return (
-        <g style={{ "will-change": "transform" }}>
+        <g class="will-change-transform">
           {state.currentPath.length > 0 && (() => {
             const node = {
               id: "temp",

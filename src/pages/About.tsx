@@ -2,18 +2,7 @@ import * as Router from "../Router.tsx"
 
 export function About(props: { name?: string }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        "flex-direction": "column",
-        "align-items": "center",
-        "justify-content": "center",
-        height: "100vh",
-        width: "100vw",
-        padding: "20px",
-        "box-sizing": "border-box",
-      }}
-    >
+    <div class="flex flex-col items-center justify-center h-screen w-screen p-5 box-border">
       <h1>
         About klario
       </h1>
@@ -27,12 +16,7 @@ export function About(props: { name?: string }) {
       </p>
       <button
         onClick={() => Router.navigate("/")}
-        style={{
-          "margin-top": "20px",
-          padding: "10px 20px",
-          "font-size": "16px",
-          cursor: "pointer",
-        }}
+        class="mt-5 px-5 py-2.5 text-base cursor-pointer"
       >
         Back to Canvas
       </button>

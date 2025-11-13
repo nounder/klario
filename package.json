@@ -4,7 +4,10 @@
   "type": "module",
   "private": true,
   "devDependencies": {
+    "@tailwindcss/vite": "^4.1.17",
     "@types/bun": "latest",
+    "daisyui": "^5.5.3",
+    "tailwindcss": "^4.1.17",
     "vite": "^7.2.0",
     "vite-plugin-solid": "^2.11.10"
   },

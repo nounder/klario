@@ -1,3 +1,16 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+@plugin "daisyui" {
+  logs: false;
+  themes: light --default;
+}
+
+@theme {
+  /* You can customize your theme here */
+  /* Example: --color-primary: oklch(0.7 0.2 200); */
+}
+
 @property --x {
   syntax: "<number>";
   inherits: false;

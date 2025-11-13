@@ -11,28 +11,12 @@ function ToolButton(props: {
   return (
     <button
       onClick={props.onClick}
-      style={{
-        padding: "16px",
-        background: props.isActive
-          ? "rgba(59, 130, 246, 0.9)"
-          : "rgba(255, 255, 255, 0.8)",
-        color: props.isActive ? "white" : "rgba(0, 0, 0, 0.7)",
-        border: props.isActive
-          ? "2px solid rgba(59, 130, 246, 1)"
-          : "2px solid rgba(255, 255, 255, 0.3)",
-        "border-radius": "12px",
-        cursor: "pointer",
-        "font-size": "24px",
-        "box-shadow": props.isActive
-          ? "0 4px 16px rgba(59, 130, 246, 0.3)"
-          : "0 2px 8px rgba(0, 0, 0, 0.1)",
-        transition: "all 0.2s ease",
-        transform: props.isActive ? "scale(1.05)" : "scale(1)",
-        width: "56px",
-        height: "56px",
-        display: "flex",
-        "align-items": "center",
-        "justify-content": "center",
+      class="p-4 rounded-xl cursor-pointer text-2xl transition-all duration-200 ease-in-out w-14 h-14 flex items-center justify-center"
+      classList={{
+        "bg-blue-500/90 text-white border-2 border-blue-500 shadow-lg shadow-blue-500/30 scale-105":
+          props.isActive,
+        "bg-white/80 text-black/70 border-2 border-white/30 shadow-md scale-100":
+          !props.isActive,
       }}
       title={props.label}
     >
@@ -48,24 +32,7 @@ function ActionButton(props: {
   return (
     <button
       onClick={props.onClick}
-      style={{
-        padding: "16px",
-        background: "rgba(239, 68, 68, 0.9)",
-        "backdrop-filter": "blur(10px)",
-        color: "white",
-        border: "1px solid rgba(255, 255, 255, 0.2)",
-        "border-radius": "12px",
-        cursor: "pointer",
-        "font-size": "20px",
-        "box-shadow":
-          "0 4px 16px rgba(239, 68, 68, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1)",
-        transition: "all 0.2s ease",
-        width: "56px",
-        height: "56px",
-        display: "flex",
-        "align-items": "center",
-        "justify-content": "center",
-      }}
+      class="p-4 bg-red-500/90 backdrop-blur-md text-white border border-white/20 rounded-xl cursor-pointer text-xl shadow-lg transition-all duration-200 ease-in-out w-14 h-14 flex items-center justify-center"
       title="Clear Canvas"
     >
       {props.children}
@@ -86,31 +53,9 @@ export function CanvasToolbar(props: {
   })
 
   return (
-    <div
-      style={{
-        display: "flex",
-        "flex-direction": "column",
-        gap: "16px",
-        "align-items": "center",
-        width: "100px",
-        "max-width": "100px",
-        height: "100%",
-        "min-height": 0,
-      }}
-    >
+    <div class="flex flex-col gap-4 items-center w-[100px] max-w-[100px] h-full min-h-0">
       {/* Tool buttons section - can shrink */}
-      <div
-        style={{
-          display: "flex",
-          "flex-direction": "column",
-          gap: "10px",
-          "align-items": "center",
-          width: "100%",
-          "flex-shrink": "1",
-          "min-height": 0,
-          overflow: "auto",
-        }}
-      >
+      <div class="flex flex-col gap-2.5 items-center w-full shrink min-h-0 overflow-auto">
         <For each={props.toolList}>
           {(tool) => (
             <ToolButton
@@ -125,35 +70,15 @@ export function CanvasToolbar(props: {
       </div>
 
       {/* Tool-specific settings section - can shrink */}
-      <div
-        style={{
-          width: "100%",
-          display: "flex",
-          "flex-direction": "column",
-          gap: "12px",
-          "align-items": "center",
-          "flex-shrink": "1",
-          "min-height": 0,
-          overflow: "auto",
-        }}
-      >
+      <div class="w-full flex flex-col gap-3 items-center shrink min-h-0 overflow-auto">
         {currentToolInstance()?.renderSettings?.()}
       </div>
 
       {/* Spacer - grows to push action buttons to bottom */}
-      <div style={{ "flex-grow": "1" }} />
+      <div class="grow" />
 
       {/* Action buttons section - always visible, never shrinks */}
-      <div
-        style={{
-          width: "100%",
-          "flex-shrink": "0",
-          display: "flex",
-          "flex-direction": "column",
-          gap: "10px",
-          "align-items": "center",
-        }}
-      >
+      <div class="w-full shrink-0 flex flex-col gap-2.5 items-center">
         <ActionButton
           onClick={() => {
             props.onClearCanvas?.()

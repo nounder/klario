@@ -13,14 +13,8 @@ export const make = Tool.build(() => {
   return {
     renderSettings: () => (
       <>
-        <div style={{ display: "flex", gap: "12px", "align-items": "center" }}>
-          <span
-            style={{
-              "font-size": "13px",
-              "font-weight": "600",
-              color: "rgba(0, 0, 0, 0.7)",
-            }}
-          >
+        <div class="flex gap-3 items-center">
+          <span class="text-[13px] font-semibold text-black/70">
             Selected: {state.selectedNodes.length} node(s)
           </span>
         </div>
@@ -30,20 +24,11 @@ export const make = Tool.build(() => {
             // Group selected nodes logic would go here
           }}
           disabled={state.selectedNodes.length < 2}
-          style={{
-            padding: "8px 16px",
-            background: state.selectedNodes.length >= 2
-              ? "rgba(59, 130, 246, 0.9)"
-              : "rgba(200, 200, 200, 0.5)",
-            color: "white",
-            border: "2px solid rgba(255, 255, 255, 0.3)",
-            "border-radius": "10px",
-            cursor: state.selectedNodes.length >= 2
-              ? "pointer"
-              : "not-allowed",
-            "font-weight": "600",
-            "font-size": "13px",
-            "letter-spacing": "0.5px",
+          class="px-4 py-2 text-white border-2 border-white/30 rounded-[10px] font-semibold text-[13px] tracking-[0.5px]"
+          classList={{
+            "bg-blue-500/90 cursor-pointer": state.selectedNodes.length >= 2,
+            "bg-gray-400/50 cursor-not-allowed":
+              state.selectedNodes.length < 2,
           }}
         >
           Group Nodes

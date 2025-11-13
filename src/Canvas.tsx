@@ -472,11 +472,7 @@ export function Canvas(props: {
   }
 
   return (
-    <div
-      style={{
-        width: "100%",
-      }}
-    >
+    <div class="w-full">
       <svg
         ref={svgRef}
         viewBox={`${canvasState.viewBox.x} ${canvasState.viewBox.y} ${canvasState.viewBox.width} ${canvasState.viewBox.height}`}

@@ -14,19 +14,8 @@ export default function (props: {
         type="button"
         popovertarget={popoverId}
         popovertargetaction="toggle"
+        class="w-9 h-9 bg-white/80 border-2 border-white/30 rounded-lg cursor-pointer text-lg shadow-md transition-all duration-200 ease-in-out flex items-center justify-center"
         style={{
-          width: "36px",
-          height: "36px",
-          background: "rgba(255, 255, 255, 0.8)",
-          border: "2px solid rgba(255, 255, 255, 0.3)",
-          "border-radius": "8px",
-          cursor: "pointer",
-          "font-size": "18px",
-          "box-shadow": "0 2px 8px rgba(0, 0, 0, 0.1)",
-          transition: "all 0.2s ease",
-          display: "flex",
-          "align-items": "center",
-          "justify-content": "center",
           // @ts-ignore - CSS Anchor Positioning
           "anchor-name": `--anchor-${popoverId}`,
         }}
@@ -38,19 +27,13 @@ export default function (props: {
       <div
         id={popoverId}
         popover="auto"
+        class="m-0 p-3 bg-white/95 backdrop-blur-xl border-2 border-blue-500/30 rounded-xl shadow-xl"
         style={{
           // @ts-ignore - CSS Anchor Positioning
           "position-anchor": `--anchor-${popoverId}`,
           // @ts-ignore - CSS Anchor Positioning
           "position-area": "right",
-          margin: "0",
-          padding: "12px",
-          background: "rgba(255, 255, 255, 0.95)",
-          "backdrop-filter": "blur(20px)",
           "-webkit-backdrop-filter": "blur(20px)",
-          border: "2px solid rgba(59, 130, 246, 0.3)",
-          "border-radius": "12px",
-          "box-shadow": "0 8px 24px rgba(0, 0, 0, 0.15)",
         }}
       >
         {props.children}
