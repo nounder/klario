@@ -4,7 +4,7 @@ import ZooBackgroundSvg from "../assets/ZooBackground.svg"
 export function Layout(props: FlowProps) {
   return (
     <div
-      class="flex flex-row h-full w-full relative p-8"
+      class="flex flex-row h-full w-full relative p-4"
       style={{
         background:
           `linear-gradient(135deg, rgba(102, 126, 234, 0.6) 0%, rgba(118, 75, 162, 0.6) 50%, rgba(240, 147, 251, 0.6) 100%),

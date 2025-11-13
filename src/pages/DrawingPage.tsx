@@ -23,7 +23,7 @@ function BackButton(props: { hasUnsavedChanges: boolean }) {
   return (
     <button
       onClick={handleBackClick}
-      class="bg-white border-none rounded-xl w-12 h-12 flex items-center justify-center cursor-pointer text-2xl shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+      class="bg-white border-none rounded-xl w-12 h-12 flex items-center justify-center cursor-pointer text-2xl shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg text-black"
     >
       ←
     </button>
@@ -33,7 +33,6 @@ function BackButton(props: { hasUnsavedChanges: boolean }) {
 function ToolButton(props: {
   type: ToolType
   label: string
-  icon: string
   isActive: boolean
   onClick: () => void
   transform: string
@@ -42,29 +41,23 @@ function ToolButton(props: {
     <button
       onClick={props.onClick}
       title={props.label}
+      class="btn btn-circle bg-white border-none w-16 h-16"
     >
-      {props.icon === "pencil"
-        ? (
-          <svg
-            width="48"
-            height="48"
-            viewBox="0 0 10 58"
-            class="bg-transparent"
-          >
-            <image
-              href={PencilSvg}
-              width="10"
-              height="58"
-              style={{
-                transform: props.transform,
-                "transform-origin": "center",
-              }}
-            />
-          </svg>
-        )
-        : (
-          props.icon
-        )}
+      <svg
+        width="100%"
+        height="100%"
+        style={{ background: "none" }}
+      >
+        <image
+          href={PencilSvg}
+          width="100%"
+          height="100%"
+          style={{
+            transform: props.transform,
+            "transform-origin": "center",
+          }}
+        />
+      </svg>
     </button>
   )
 }
@@ -93,22 +86,20 @@ function Toolbar(props: {
   return (
     <div class="flex flex-col gap-4 items-center w-[100px] max-w-[100px] h-full min-h-0">
       {/* Tool buttons section - can shrink */}
-      <div class="flex flex-col gap-2.5 items-center w-full shrink min-h-0 overflow-auto">
+      <div class="flex flex-col py-2 gap-2 items-center w-full shrink min-h-0 overflow-auto">
         <ToolButton
           type="MarkerStrokeTool"
           label="Marker"
-          icon="pencil"
           isActive={props.currentTool === "MarkerStrokeTool"}
           onClick={() => props.onToolChange("MarkerStrokeTool")}
-          transform="rotate(90deg) translateY(100%) scale(3)"
+          transform="rotate(90deg) translateY(110%) scale(3)"
         />
         <ToolButton
           type="DrawEraserTool"
           label="Draw Eraser"
-          icon="pencil"
           isActive={props.currentTool === "DrawEraserTool"}
           onClick={() => props.onToolChange("DrawEraserTool")}
-          transform="rotate(-90deg)"
+          transform="rotate(-90deg) translateY(-110%) scale(3)"
         />
       </div>
 
@@ -120,7 +111,7 @@ function Toolbar(props: {
       {/* Spacer - grows to push action buttons to bottom */}
       <div class="grow" />
 
-       {/* Action buttons section - always visible, never shrinks */}
+      {/* Action buttons section - always visible, never shrinks */}
       <div class="w-full shrink-0 flex flex-col gap-2.5 items-center">
         <ActionButton
           onClick={() => {
@@ -205,15 +196,15 @@ export function DrawingPage(props: DrawingPageProps) {
     <>
       <div class="flex flex-col gap-4 items-center w-[100px]">
         <BackButton hasUnsavedChanges={hasUnsavedChanges()} />
-         <Toolbar
-           currentTool={currentTool()}
-           onToolChange={(type: Tool) => setCurrentTool(type)}
-           onClearCanvas={() => {
-             // Reset Canvas by resetting nodes to initial state
-             setNodes(initialNodes)
-           }}
-           markerTool={markerTool}
-         />
+        <Toolbar
+          currentTool={currentTool()}
+          onToolChange={(type: Tool) => setCurrentTool(type)}
+          onClearCanvas={() => {
+            // Reset Canvas by resetting nodes to initial state
+            setNodes(initialNodes)
+          }}
+          markerTool={markerTool}
+        />
       </div>
 
       <div

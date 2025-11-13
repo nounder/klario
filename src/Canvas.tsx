@@ -473,14 +473,15 @@ export function Canvas(props: {
 
   return (
     <div class="w-full">
-      <svg
-        ref={svgRef}
-        viewBox={`${canvasState.viewBox.x} ${canvasState.viewBox.y} ${canvasState.viewBox.width} ${canvasState.viewBox.height}`}
-        preserveAspectRatio="xMidYMid meet"
-        style={{
-          contain: "layout paint",
-          ...props.rootStyle,
-        }}
+       <svg
+         ref={svgRef}
+         viewBox={`${canvasState.viewBox.x} ${canvasState.viewBox.y} ${canvasState.viewBox.width} ${canvasState.viewBox.height}`}
+         preserveAspectRatio="xMidYMid meet"
+         style={{
+           contain: "layout paint",
+           cursor: "crosshair",
+           ...props.rootStyle,
+         }}
         onPointerEnter={(e) => handlePointerEnter(e)}
         onPointerDown={(e) => startDrawing(e)}
         onPointerMove={(e) => draw(e)}
