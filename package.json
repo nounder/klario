@@ -9,11 +9,14 @@
     "daisyui": "^5.5.3",
     "tailwindcss": "^4.1.17",
     "vite": "^7.2.0",
-    "vite-plugin-solid": "^2.11.10"
+    "vite-plugin-solid": "^2.11.10",
+    "wrangler": "^4.47.0"
   },
   "scripts": {
     "dev": "bunx --bun vite",
-    "build": "bunx --bun vite build"
+    "build": "bunx --bun vite build",
+    "deploy": "bunx wrangler pages deploy dist",
+    "preview": "bunx wrangler pages dev dist"
   },
   "peerDependencies": {
     "typescript": "^5"
