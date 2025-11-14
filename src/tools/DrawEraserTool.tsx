@@ -11,11 +11,24 @@ import * as Tool from "./Tool.ts"
 
 export const NodeType = DrawEraserNode.Type
 
-export const make = Tool.build(() => {
+export const make = Tool.build((options?: {
+  width?: () => number
+  onWidthChange?: (width: number) => void
+}) => {
   const [state, setState] = createStore({
     width: 20,
     currentPath: [] as StrokePoint[],
   })
+
+  // Use shared width if provided, otherwise use local state
+  const width = () => options?.width ? options.width() : state.width
+  const setWidth = (w: number) => {
+    if (options?.onWidthChange) {
+      options.onWidthChange(w)
+    } else {
+      setState("width", w)
+    }
+  }
 
   return {
     onPointerDown: (ctx) => {
@@ -26,10 +39,11 @@ export const make = Tool.build(() => {
     },
     onPointerUp: (ctx) => {
       if (state.currentPath.length > 0) {
+        const currentWidth = width()
         // Apply Douglas-Peucker simplification (same as marker strokes)
-        const epsilon = 0.5 * Math.max(1, state.width / 10)
+        const epsilon = 0.5 * Math.max(1, currentWidth / 10)
         const simplifiedPoints = simplifyStroke(state.currentPath, epsilon)
-        const bounds = calculateBoundsFromPoints(simplifiedPoints, state.width)
+        const bounds = calculateBoundsFromPoints(simplifiedPoints, currentWidth)
 
         const newNode: Node = {
           id: Unique.token(16),
@@ -38,7 +52,7 @@ export const make = Tool.build(() => {
           bounds,
           locked: false,
           points: simplifiedPoints,
-          width: state.width,
+          width: currentWidth,
         }
 
         ctx.addNode(newNode)
@@ -56,13 +70,13 @@ export const make = Tool.build(() => {
               type="range"
               min={5}
               max={50}
-              value={state.width}
+              value={width()}
               onInput={(e) =>
-                setState("width", parseInt(e.currentTarget.value))}
+                setWidth(parseInt(e.currentTarget.value))}
               class="w-full h-1.5 bg-white/30 rounded outline-none appearance-none"
             />
             <span class="font-semibold text-black/70 text-[11px] bg-white/50 px-1.5 py-0.5 rounded-md border border-white/30">
-              {state.width}px
+              {width()}px
             </span>
           </div>
         </CollapsibleSetting>
@@ -80,7 +94,7 @@ export const make = Tool.build(() => {
               bounds: { x: 0, y: 0, width: 0, height: 0 },
               locked: false,
               points: state.currentPath,
-              width: state.width,
+              width: width(),
             }
 
             return DrawEraserNode.render(node)

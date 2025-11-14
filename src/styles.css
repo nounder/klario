@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@fontsource/chewy";
 @plugin "daisyui";
 
 @plugin "daisyui" {
@@ -41,6 +42,10 @@ body {
   -webkit-user-select: none;
   /* user-scalable=no doesn't work since iOS 10, remove touch event altogether */
   touch-action: none;
+
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
 }
 
 button {
@@ -49,18 +54,12 @@ button {
   -webkit-user-select: none;
 }
 
-#app {
-  height: 100vh;
-  height: 100dvh;
-}
-
 svg {
   user-select: none;
   touch-action: none;
   /* Safari still needs prefix 2025-11-05 */
   -webkit-user-select: none;
   outline: none;
-  background: white;
   /* Force Safari to properly render SVG filters */
   transform: translateZ(0);
   -webkit-transform: translateZ(0);

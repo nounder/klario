@@ -31,26 +31,38 @@ export default function ColorPicker(props: {
                     `scale(1) rotate(${baseRotation}deg)`
                 }
               }}
-              class="w-9 h-9 cursor-pointer rounded-lg transition-all duration-200 ease-in-out"
+              class="w-9 h-9 cursor-pointer rounded-lg transition-all duration-200 ease-in-out relative overflow-hidden"
               classList={{
                 "shadow-lg": props.value === c,
                 "border-2 border-white/30 shadow-md": props.value !== c,
               }}
               style={{
-                background: c,
+                background:
+                  `linear-gradient(135deg, ${c} 0%, color-mix(in srgb, ${c} 80%, black) 100%)`,
                 transform: props.value === c
                   ? `scale(1.1) rotate(${baseRotation}deg)`
                   : `scale(1) rotate(${baseRotation}deg)`,
+                "box-shadow": props.value === c
+                  ? "0 4px 12px rgba(0,0,0,0.3)"
+                  : "0 2px 6px rgba(0,0,0,0.2)",
                 ...(props.value === c
                   ? {
-                    border: "2px solid white",
-                    outline: `3px solid ${c}`,
-                    "outline-offset": "0px",
+                    border: "2px solid rgba(255, 255, 255, 0.7)",
+                    outline:
+                      `3px solid color-mix(in srgb, ${c} 50%, transparent)`,
                   }
                   : {}),
               }}
               title={c}
-            />
+            >
+              <div
+                class="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.1) 40%, transparent 60%)",
+                }}
+              />
+            </button>
           )
         }}
       </For>

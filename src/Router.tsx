@@ -15,6 +15,7 @@ export type Route = {
 export function navigate(url: string) {
   window.history.pushState({}, "", url)
   setCurrentPath(window.location.pathname)
+  window.scrollTo(0, 0)
 }
 
 export function navigateTransition(url: string) {
@@ -36,6 +37,7 @@ export function Router(props: { routes: Route[] }) {
   onMount(() => {
     const handlePopState = () => {
       setCurrentPath(window.location.pathname)
+      window.scrollTo(0, 0)
     }
 
     window.addEventListener("popstate", handlePopState)

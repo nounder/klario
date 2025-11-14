@@ -1,7 +1,4 @@
 import { render } from "solid-js/web"
 import App from "./App"
 
-const appElement = document.getElementById("app")
-if (appElement) {
-  render(() => <App />, appElement)
-}
+render(() => <App />, document.body)

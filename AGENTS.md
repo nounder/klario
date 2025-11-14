@@ -24,8 +24,6 @@
 - **JSX**: Prefer `style` object prop over className. Use `classList` for conditional classes
 - **State**: Use SolidJS `createSignal`/`createStore`, NOT React hooks
 
-## Project Structure
+## Guidance
 
-- `src/nodes/`: Canvas node types (drawable elements)
-- `src/tools/`: Drawing tools (pen, eraser, text, etc.)
-- `src/strokes/`: Stroke rendering and simplification
+- Never run build commands.

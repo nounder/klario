@@ -19,6 +19,7 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@fontsource/chewy": "^5.2.7",
     "solid-js": "^1.9.10",
     "ts-namespace-import": "nounder/ts-namespace-import#140c405"
   }

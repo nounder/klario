@@ -23,9 +23,14 @@ function BackButton(props: { hasUnsavedChanges: boolean }) {
   return (
     <button
       onClick={handleBackClick}
-      class="bg-white border-none rounded-xl w-12 h-12 flex items-center justify-center cursor-pointer text-2xl shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg text-black"
+      class="border-none cursor-pointer text-black text-6xl hover:scale-125 hover:rotate-10 transition-all stroke-3"
+      style={{
+        "-webkit-text-stroke": "3px #333",
+        "-webkit-text-fill-color": "white",
+      }}
+      title="Back"
     >
-      ←
+      ×
     </button>
   )
 }
@@ -41,7 +46,13 @@ function ToolButton(props: {
     <button
       onClick={props.onClick}
       title={props.label}
-      class="btn btn-circle bg-white border-none w-16 h-16"
+      class="btn btn-circle border-none w-16 h-16 shadow-none hover:bg-transparent"
+      style={{
+        background: "rgba(255, 255, 255, 0.7)",
+        "backdrop-filter": "blur(21px)",
+        outline: props.isActive ? "3px solid #333" : "none",
+        "outline-offset": "4px",
+      }}
     >
       <svg
         width="100%"
@@ -62,21 +73,6 @@ function ToolButton(props: {
   )
 }
 
-function ActionButton(props: {
-  onClick: () => void
-  children: any
-}) {
-  return (
-    <button
-      onClick={props.onClick}
-      class="p-4 bg-red-500/90 backdrop-blur-md text-white border border-white/20 rounded-xl cursor-pointer text-xl shadow-lg transition-all duration-200 ease-in-out w-14 h-14 flex items-center justify-center"
-      title="Clear Canvas"
-    >
-      {props.children}
-    </button>
-  )
-}
-
 function Toolbar(props: {
   currentTool: Tool
   onToolChange: (type: Tool) => void
@@ -84,16 +80,8 @@ function Toolbar(props: {
   markerTool: any
 }) {
   return (
-    <div class="flex flex-col gap-4 items-center w-[100px] max-w-[100px] h-full min-h-0">
-      {/* Tool buttons section - can shrink */}
-      <div class="flex flex-col py-2 gap-2 items-center w-full shrink min-h-0 overflow-auto">
-        <ToolButton
-          type="MarkerStrokeTool"
-          label="Marker"
-          isActive={props.currentTool === "MarkerStrokeTool"}
-          onClick={() => props.onToolChange("MarkerStrokeTool")}
-          transform="rotate(90deg) translateY(110%) scale(3)"
-        />
+    <div class="flex flex-col gap-4 items-center w-[100px] max-w-[100px] min-h-0">
+      <div class="flex flex-col py-2 gap-4 items-center w-full shrink min-h-0 overflow-auto">
         <ToolButton
           type="DrawEraserTool"
           label="Draw Eraser"
@@ -101,30 +89,17 @@ function Toolbar(props: {
           onClick={() => props.onToolChange("DrawEraserTool")}
           transform="rotate(-90deg) translateY(-110%) scale(3)"
         />
+        <ToolButton
+          type="MarkerStrokeTool"
+          label="Marker"
+          isActive={props.currentTool === "MarkerStrokeTool"}
+          onClick={() => props.onToolChange("MarkerStrokeTool")}
+          transform="rotate(90deg) translateY(110%) scale(3)"
+        />
       </div>
 
-      {/* Tool-specific settings section - can shrink */}
       <div class="w-full flex flex-col gap-3 items-center shrink min-h-0 overflow-auto">
         {props.markerTool.renderSettings?.()}
-      </div>
-
-      {/* Spacer - grows to push action buttons to bottom */}
-      <div class="grow" />
-
-      {/* Action buttons section - always visible, never shrinks */}
-      <div class="w-full shrink-0 flex flex-col gap-2.5 items-center">
-        <ActionButton
-          onClick={() => {
-            const confirmed = window.confirm(
-              "Are you sure you want to clear the canvas? This cannot be undone.",
-            )
-            if (confirmed) {
-              props.onClearCanvas?.()
-            }
-          }}
-        >
-          🗑️
-        </ActionButton>
       </div>
     </div>
   )
@@ -141,6 +116,8 @@ export function DrawingPage(props: DrawingPageProps) {
   const canvasTransitionName = ViewTransitions.getDrawingTransitionName(
     props.id,
   )
+
+  const [sharedWidth, setSharedWidth] = createSignal(21)
 
   const markerTool = Tools.MarkerStrokeTool.make({
     epsilon: 0,
@@ -170,6 +147,8 @@ export function DrawingPage(props: DrawingPageProps) {
       "#8B4513",
       "#2F4F4F",
     ],
+    width: sharedWidth,
+    onWidthChange: setSharedWidth,
     onColorPicked: () => {
       // When color is picked and not on marker tool, switch to marker
       if (currentTool() !== "MarkerStrokeTool") {
@@ -178,7 +157,10 @@ export function DrawingPage(props: DrawingPageProps) {
     },
   })
 
-  const eraserTool = Tools.DrawEraserTool.make()
+  const eraserTool = Tools.DrawEraserTool.make({
+    width: sharedWidth,
+    onWidthChange: setSharedWidth,
+  })
 
   const tool = () =>
     currentTool() === "MarkerStrokeTool" ? markerTool : eraserTool
@@ -188,13 +170,11 @@ export function DrawingPage(props: DrawingPageProps) {
 
   const [nodes, setNodes] = createSignal<Canvas.Node[]>(initialNodes)
 
-  // Track if there are unsaved changes
   const hasUnsavedChanges = () => nodes().length > 0
 
-  // You can use props.id to load specific drawing data in the future
   return (
-    <>
-      <div class="flex flex-col gap-4 items-center w-[100px]">
+    <div class="flex relative w-full gap-2">
+      <div class="flex flex-col sticky top-0 pt-4 gap-4 items-center w-[100px] self-start">
         <BackButton hasUnsavedChanges={hasUnsavedChanges()} />
         <Toolbar
           currentTool={currentTool()}
@@ -217,6 +197,9 @@ export function DrawingPage(props: DrawingPageProps) {
           nodes={nodes()}
           onChange={setNodes}
           tool={tool()}
+          rootStyle={{
+            background: "white",
+          }}
           bounds={{
             x: 0,
             y: 0,
@@ -234,6 +217,6 @@ export function DrawingPage(props: DrawingPageProps) {
           }
         />
       </div>
-    </>
+    </div>
   )
 }
