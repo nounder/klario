@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js"
-import Bangkok2025ArabicaSvg from "../../assets/Bangkok2025Arabica.svg"
 import PencilSvg from "../../assets/Pencil.svg"
 import * as Canvas from "../Canvas.tsx"
+import * as Data from "../data.ts"
 import * as Router from "../Router.tsx"
 import * as Tools from "../tools/index.ts"
 import type { ToolType } from "../tools/index.ts"
@@ -24,10 +24,6 @@ function BackButton(props: { hasUnsavedChanges: boolean }) {
     <button
       onClick={handleBackClick}
       class="border-none cursor-pointer text-black text-6xl hover:scale-125 hover:rotate-10 transition-all stroke-3"
-      style={{
-        "-webkit-text-stroke": "3px #333",
-        "-webkit-text-fill-color": "white",
-      }}
       title="Back"
     >
       ×
@@ -117,12 +113,15 @@ export function DrawingPage(props: DrawingPageProps) {
     props.id,
   )
 
+  const drawing = props.id
+    ? Data.Drawings[props.id as keyof typeof Data.Drawings]
+    : undefined
+
   const [sharedWidth, setSharedWidth] = createSignal(21)
 
   const markerTool = Tools.MarkerStrokeTool.make({
     epsilon: 0,
     colors: [
-      "#000000",
       "#FF0000",
       "#00FF00",
       "#0000FF",
@@ -145,7 +144,6 @@ export function DrawingPage(props: DrawingPageProps) {
       "#ADFF2F",
       "#FF69B4",
       "#8B4513",
-      "#2F4F4F",
     ],
     width: sharedWidth,
     onWidthChange: setSharedWidth,
@@ -173,7 +171,7 @@ export function DrawingPage(props: DrawingPageProps) {
   const hasUnsavedChanges = () => nodes().length > 0
 
   return (
-    <div class="flex relative w-full gap-2">
+    <div class="flex relative w-full gap-2 mx-4">
       <div class="flex flex-col sticky top-0 pt-4 gap-4 items-center w-[100px] self-start">
         <BackButton hasUnsavedChanges={hasUnsavedChanges()} />
         <Toolbar
@@ -208,11 +206,15 @@ export function DrawingPage(props: DrawingPageProps) {
           }}
           underlay={
             <image
-              href={Bangkok2025ArabicaSvg}
+              href={drawing!.imageUrl}
               x={0}
               y={0}
               width={1536}
               height={1024}
+              style={{
+                "mix-blend-mode": "multiply",
+                "pointer-events": "none",
+              }}
             />
           }
         />
