@@ -84,8 +84,8 @@ export const make = Tool.build((options?: {
   onWidthChange?: (width: number) => void
 }) => {
   const [state, setState] = createStore({
-    color: "#000000",
-    width: 21,
+    color: "#FFFF00",
+    width: 14,
     opacity: 1,
     currentPath: [] as StrokePoint[],
   })

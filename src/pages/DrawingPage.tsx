@@ -117,7 +117,7 @@ export function DrawingPage(props: DrawingPageProps) {
     ? Data.Drawings[props.id as keyof typeof Data.Drawings]
     : undefined
 
-  const [sharedWidth, setSharedWidth] = createSignal(21)
+  const [sharedWidth, setSharedWidth] = createSignal(14)
 
   const markerTool = Tools.MarkerStrokeTool.make({
     epsilon: 0,
