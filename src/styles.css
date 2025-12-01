@@ -40,8 +40,8 @@ body {
   user-select: none;
   /* Safari still needs prefix 2025-11-05 */
   -webkit-user-select: none;
-  /* user-scalable=no doesn't work since iOS 10, remove touch event altogether */
-  touch-action: none;
+  /* Allow vertical scrolling on iPad, block pinch-zoom */
+  touch-action: pan-x pan-y;
 
   display: flex;
   flex-direction: column;
